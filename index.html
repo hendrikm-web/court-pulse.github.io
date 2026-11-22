@@ -2971,9 +2971,37 @@
         return `${Math.round((part / whole) * 100)} %`;
       }
 
+      function computeStatBarWidths(v0, v1, maxScale = null) {
+        const a = Math.max(0, Number(v0) || 0);
+        const b = Math.max(0, Number(v1) || 0);
+        if (maxScale && maxScale > 0) {
+          return [
+            Math.max(0, Math.min(100, Math.round((a / maxScale) * 100))),
+            Math.max(0, Math.min(100, Math.round((b / maxScale) * 100)))
+          ];
+        }
+        const top = Math.max(a, b);
+        if (top <= 0) return [0, 0];
+        return [
+          Math.round((a / top) * 100),
+          Math.round((b / top) * 100)
+        ];
+      }
+
       function renderKeyStatsCards(_match, st) {
         const grid = document.getElementById('keyStatsGrid');
         if (!grid) return;
+
+        const ptsTotalAll = (st.totalPoints[0] || 0) + (st.totalPoints[1] || 0);
+        const maxRallyCount = Math.max(
+          st.rallyWon['0-4'][0], st.rallyWon['0-4'][1],
+          st.rallyWon['5-8'][0], st.rallyWon['5-8'][1],
+          st.rallyWon['>9'][0], st.rallyWon['>9'][1],
+          1
+        );
+        const aggPositive0 = Math.max(0, st.aggressiveMargin[0]);
+        const aggPositive1 = Math.max(0, st.aggressiveMargin[1]);
+        const maxAggScale = Math.max(aggPositive0, aggPositive1, 1);
 
         const rows = [
           {
@@ -2981,91 +3009,101 @@
             left: `${st.totalPoints[0]}`,
             right: `${st.totalPoints[1]}`,
             v0: st.totalPoints[0],
-            v1: st.totalPoints[1]
+            v1: st.totalPoints[1],
+            maxScale: ptsTotalAll || 1
           },
           {
             label: '1. Aufschlag im Feld %',
             left: `${pctText(st.firstServeIn[0], st.firstServeTotal[0])} (${st.firstServeIn[0]}/${st.firstServeTotal[0]})`,
             right: `${pctText(st.firstServeIn[1], st.firstServeTotal[1])} (${st.firstServeIn[1]}/${st.firstServeTotal[1]})`,
             v0: st.firstServeTotal[0] ? (st.firstServeIn[0] / st.firstServeTotal[0]) * 100 : 0,
-            v1: st.firstServeTotal[1] ? (st.firstServeIn[1] / st.firstServeTotal[1]) * 100 : 0
+            v1: st.firstServeTotal[1] ? (st.firstServeIn[1] / st.firstServeTotal[1]) * 100 : 0,
+            maxScale: 100
           },
           {
             label: 'Punkte gewonnen 1. Aufschlag',
             left: `${pctText(st.firstServeWon[0], st.firstServeIn[0])} (${st.firstServeWon[0]}/${st.firstServeIn[0]})`,
             right: `${pctText(st.firstServeWon[1], st.firstServeIn[1])} (${st.firstServeWon[1]}/${st.firstServeIn[1]})`,
             v0: st.firstServeIn[0] ? (st.firstServeWon[0] / st.firstServeIn[0]) * 100 : 0,
-            v1: st.firstServeIn[1] ? (st.firstServeWon[1] / st.firstServeIn[1]) * 100 : 0
+            v1: st.firstServeIn[1] ? (st.firstServeWon[1] / st.firstServeIn[1]) * 100 : 0,
+            maxScale: 100
           },
           {
             label: 'Punkte gewonnen 2. Aufschlag',
             left: `${pctText(st.secondServeWon[0], st.secondServeTotal[0])} (${st.secondServeWon[0]}/${st.secondServeTotal[0]})`,
             right: `${pctText(st.secondServeWon[1], st.secondServeTotal[1])} (${st.secondServeWon[1]}/${st.secondServeTotal[1]})`,
             v0: st.secondServeTotal[0] ? (st.secondServeWon[0] / st.secondServeTotal[0]) * 100 : 0,
-            v1: st.secondServeTotal[1] ? (st.secondServeWon[1] / st.secondServeTotal[1]) * 100 : 0
+            v1: st.secondServeTotal[1] ? (st.secondServeWon[1] / st.secondServeTotal[1]) * 100 : 0,
+            maxScale: 100
           },
           {
             label: 'Asse / Service Winner',
             left: `${st.aces[0]} / ${st.serviceWinners[0]}`,
             right: `${st.aces[1]} / ${st.serviceWinners[1]}`,
             v0: st.aces[0] + st.serviceWinners[0],
-            v1: st.aces[1] + st.serviceWinners[1]
+            v1: st.aces[1] + st.serviceWinners[1],
+            maxScale: null
           },
           {
             label: 'Doppelfehler',
             left: `${st.doubleFaults[0]}`,
             right: `${st.doubleFaults[1]}`,
             v0: st.doubleFaults[0],
-            v1: st.doubleFaults[1]
+            v1: st.doubleFaults[1],
+            maxScale: null
           },
           {
             label: 'Aggressive Margin (W + gegn. FE − UE)',
             left: `${st.aggressiveMargin[0] >= 0 ? '+' : ''}${st.aggressiveMargin[0]}`,
             right: `${st.aggressiveMargin[1] >= 0 ? '+' : ''}${st.aggressiveMargin[1]}`,
-            v0: Math.max(0, st.aggressiveMargin[0] + 15),
-            v1: Math.max(0, st.aggressiveMargin[1] + 15)
+            v0: aggPositive0,
+            v1: aggPositive1,
+            maxScale: maxAggScale
           },
           {
             label: 'Breakball-Conversion (Genutzt)',
             left: `${pctText(st.bpConverted[0], st.bpOpportunities[0])} (${st.bpConverted[0]}/${st.bpOpportunities[0]})`,
             right: `${pctText(st.bpConverted[1], st.bpOpportunities[1])} (${st.bpConverted[1]}/${st.bpOpportunities[1]})`,
             v0: st.bpOpportunities[0] ? (st.bpConverted[0] / st.bpOpportunities[0]) * 100 : 0,
-            v1: st.bpOpportunities[1] ? (st.bpConverted[1] / st.bpOpportunities[1]) * 100 : 0
+            v1: st.bpOpportunities[1] ? (st.bpConverted[1] / st.bpOpportunities[1]) * 100 : 0,
+            maxScale: 100
           },
           {
             label: 'Breakball-Saved (Abgewehrt)',
             left: `${pctText(st.bpSaved[0], st.bpFaced[0])} (${st.bpSaved[0]}/${st.bpFaced[0]})`,
             right: `${pctText(st.bpSaved[1], st.bpFaced[1])} (${st.bpSaved[1]}/${st.bpFaced[1]})`,
             v0: st.bpFaced[0] ? (st.bpSaved[0] / st.bpFaced[0]) * 100 : 0,
-            v1: st.bpFaced[1] ? (st.bpSaved[1] / st.bpFaced[1]) * 100 : 0
+            v1: st.bpFaced[1] ? (st.bpSaved[1] / st.bpFaced[1]) * 100 : 0,
+            maxScale: 100
           },
           {
             label: 'Rallyes gewonnen: Kurz (0–4)',
             left: `${st.rallyWon['0-4'][0]}`,
             right: `${st.rallyWon['0-4'][1]}`,
             v0: st.rallyWon['0-4'][0],
-            v1: st.rallyWon['0-4'][1]
+            v1: st.rallyWon['0-4'][1],
+            maxScale: maxRallyCount
           },
           {
             label: 'Rallyes gewonnen: Mittel (5–8)',
             left: `${st.rallyWon['5-8'][0]}`,
             right: `${st.rallyWon['5-8'][1]}`,
             v0: st.rallyWon['5-8'][0],
-            v1: st.rallyWon['5-8'][1]
+            v1: st.rallyWon['5-8'][1],
+            maxScale: maxRallyCount
           },
           {
             label: 'Rallyes gewonnen: Lang (> 9)',
             left: `${st.rallyWon['>9'][0]}`,
             right: `${st.rallyWon['>9'][1]}`,
             v0: st.rallyWon['>9'][0],
-            v1: st.rallyWon['>9'][1]
+            v1: st.rallyWon['>9'][1],
+            maxScale: maxRallyCount
           }
         ];
 
         grid.innerHTML = rows.map(r => {
-          const sum = r.v0 + r.v1;
-          const pct0 = sum > 0 ? Math.round((r.v0 / sum) * 100) : 50;
-          const pct1 = 100 - pct0;
+          const [w0, w1] = computeStatBarWidths(r.v0, r.v1, r.maxScale);
           return `
             <div class="space-y-1">
               <div class="flex items-center justify-between gap-2 text-xs sm:text-sm">
@@ -3073,9 +3111,13 @@
                 <span class="font-semibold text-slate-700 dark:text-slate-300 text-center">${escapeHtml(r.label)}</span>
                 <span class="font-bold text-blue-700 dark:text-blue-400 tabular-nums text-right">${escapeHtml(r.right)}</span>
               </div>
-              <div class="h-2 w-full rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 flex">
-                <div class="bg-emerald-500 transition-all duration-300" style="width: ${pct0}%"></div>
-                <div class="bg-blue-500 transition-all duration-300" style="width: ${pct1}%"></div>
+              <div class="grid grid-cols-2 gap-1.5">
+                <div class="h-2 w-full rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 flex justify-end">
+                  <div class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: ${w0}%"></div>
+                </div>
+                <div class="h-2 w-full rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 flex justify-start">
+                  <div class="bg-blue-500 h-full rounded-full transition-all duration-300" style="width: ${w1}%"></div>
+                </div>
               </div>
             </div>
           `;
@@ -3086,22 +3128,34 @@
         const container = document.getElementById('shotTreeContainer');
         if (!container) return;
 
-        container.innerHTML = SHOT_TREE_SPEC.map(group => {
+        // Höchsten Gesamtwert über alle Hauptkategorien ermitteln, damit die Gruppenbalken proportional vergleichbar sind
+        const groupTotalsMap = {};
+        let maxGroupTotal = 1;
+        SHOT_TREE_SPEC.forEach(group => {
           const totals = group.children.reduce((acc, ch) => {
             const vals = st.shotBreakdown[group.id][ch.key] || [0, 0];
             acc[0] += vals[0];
             acc[1] += vals[1];
             return acc;
           }, [0, 0]);
+          groupTotalsMap[group.id] = totals;
+          maxGroupTotal = Math.max(maxGroupTotal, totals[0], totals[1]);
+        });
 
+        container.innerHTML = SHOT_TREE_SPEC.map(group => {
+          const totals = groupTotalsMap[group.id];
           const isExpanded = Boolean(uiState.expandedTreeNodes[group.id]);
-          const sum = totals[0] + totals[1];
-          const p0 = sum > 0 ? Math.round((totals[0] / sum) * 100) : 50;
+          const [w0, w1] = computeStatBarWidths(totals[0], totals[1], maxGroupTotal);
+
+          // Höchsten Einzelwert innerhalb der jeweiligen Kategorie als Referenz für die Unterbalken nutzen
+          const maxChildVal = Math.max(
+            1,
+            ...group.children.flatMap(ch => st.shotBreakdown[group.id][ch.key] || [0, 0])
+          );
 
           const childrenHtml = group.children.map(ch => {
             const vals = st.shotBreakdown[group.id][ch.key] || [0, 0];
-            const cSum = vals[0] + vals[1];
-            const cp0 = cSum > 0 ? Math.round((vals[0] / cSum) * 100) : 50;
+            const [cw0, cw1] = computeStatBarWidths(vals[0], vals[1], maxChildVal);
             return `
               <div class="pl-3 sm:pl-5 py-1.5 border-l-2 border-slate-300 dark:border-slate-700 space-y-1">
                 <div class="flex items-center justify-between text-xs">
@@ -3109,9 +3163,13 @@
                   <span class="text-slate-700 dark:text-slate-300 font-medium">${escapeHtml(ch.label)}</span>
                   <span class="font-bold text-blue-700 dark:text-blue-400 tabular-nums">${vals[1]}</span>
                 </div>
-                <div class="h-1.5 w-full rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 flex">
-                  <div class="bg-emerald-500/80" style="width: ${cp0}%"></div>
-                  <div class="bg-blue-500/80" style="width: ${100 - cp0}%"></div>
+                <div class="grid grid-cols-2 gap-1.5">
+                  <div class="h-1.5 w-full rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 flex justify-end">
+                    <div class="bg-emerald-500/85 h-full rounded-full transition-all duration-300" style="width: ${cw0}%"></div>
+                  </div>
+                  <div class="h-1.5 w-full rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 flex justify-start">
+                    <div class="bg-blue-500/85 h-full rounded-full transition-all duration-300" style="width: ${cw1}%"></div>
+                  </div>
                 </div>
               </div>
             `;
@@ -3129,9 +3187,13 @@
                   </span>
                   <span class="font-extrabold text-blue-700 dark:text-blue-400 tabular-nums">${totals[1]}</span>
                 </div>
-                <div class="h-2 w-full rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 flex">
-                  <div class="bg-emerald-500" style="width: ${p0}%"></div>
-                  <div class="bg-blue-500" style="width: ${100 - p0}%"></div>
+                <div class="grid grid-cols-2 gap-1.5">
+                  <div class="h-2 w-full rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 flex justify-end">
+                    <div class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: ${w0}%"></div>
+                  </div>
+                  <div class="h-2 w-full rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 flex justify-start">
+                    <div class="bg-blue-500 h-full rounded-full transition-all duration-300" style="width: ${w1}%"></div>
+                  </div>
                 </div>
               </button>
               <div class="${isExpanded ? 'mt-3 space-y-1.5' : 'hidden'}">
