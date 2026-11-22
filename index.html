@@ -531,6 +531,23 @@
         </div>
       </section>
 
+      <!-- Performance-Rating Spiderweb-Diagramm (Skala 1–10) -->
+      <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h2 class="text-base font-bold text-slate-900 dark:text-white">Performance-Rating (Skala 1 – 10)</h2>
+            <p class="text-xs text-slate-600 dark:text-slate-400">Bewertung auf Basis der Match-Statistiken: Aufschlag, Vorhand, Rückhand, Netzspiel &amp; Gesamt-Performance (1 = schwach, 10 = überragend)</p>
+          </div>
+          <div id="radarLegendBadge" class="flex items-center gap-3 text-xs font-bold"></div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+          <div class="lg:col-span-6 flex justify-center">
+            <svg id="performanceRadarSvg" viewBox="0 0 420 350" class="w-full max-w-[390px] h-auto select-none" role="img" aria-label="Spiderweb Performance-Diagramm"></svg>
+          </div>
+          <div id="performanceRatingCards" class="lg:col-span-6 space-y-2.5"></div>
+        </div>
+      </section>
+
       <!-- Kennzahlen-Karten -->
       <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm">
         <h2 class="text-base font-bold text-slate-900 dark:text-white mb-4">Match-Kennzahlen &amp; Aggressive Margin</h2>
@@ -1714,7 +1731,269 @@
         stats.aggressiveMargin[0] = stats.winnersTotal[0] + stats.feTotal[1] - stats.ueTotal[0];
         stats.aggressiveMargin[1] = stats.winnersTotal[1] + stats.feTotal[0] - stats.ueTotal[1];
 
+        stats.performanceRating = computePerformanceRatings(stats);
+
         return stats;
+      }
+
+      // =========================================================================
+      // 7B. PERFORMANCE-RATING ENGINE (SKALA 1.0 – 10.0) & SPIDERWEB-GENERATOR
+      // =========================================================================
+      function clampRating(val) {
+        const num = Number(val);
+        if (!Number.isFinite(num)) return 5.0;
+        const clamped = Math.max(1.0, Math.min(10.0, num));
+        return Math.round(clamped * 10) / 10;
+      }
+
+      function computePerformanceRatings(st) {
+        const calcPlayer = (p) => {
+          const opp = 1 - p;
+
+          // 1. Aufschlag (1. Aufschlag Quote, Punkte 1. & 2. Aufschlag, Asse/SW vs. Doppelfehler)
+          const fsTotal = st.firstServeTotal[p] || 0;
+          const fsIn = st.firstServeIn[p] || 0;
+          const fsWon = st.firstServeWon[p] || 0;
+          const ssTotal = st.secondServeTotal[p] || 0;
+          const ssWon = st.secondServeWon[p] || 0;
+          const totalServes = fsIn + ssTotal;
+
+          let serveScore = 5.0;
+          if (totalServes > 0) {
+            const fsInPct = fsTotal > 0 ? fsIn / fsTotal : 0.6;
+            const fsWonPct = fsIn > 0 ? fsWon / fsIn : 0.65;
+            const ssWonPct = ssTotal > 0 ? ssWon / ssTotal : 0.45;
+            const freePtsRate = (st.aces[p] + st.serviceWinners[p]) / totalServes;
+            const dfRate = st.doubleFaults[p] / totalServes;
+
+            const rawServe = 1.0
+              + fsInPct * 2.4
+              + fsWonPct * 3.1
+              + ssWonPct * 2.0
+              + Math.min(1.6, freePtsRate * 9.0)
+              - Math.min(2.2, dfRate * 11.0);
+            serveScore = clampRating(rawServe);
+          }
+
+          // Einheitliche Schlag-Bewertungsfunktion für Vorhand, Rückhand und Netzspiel:
+          // Effizienz = (2.0 * Winner - 1.0 * UE - 0.5 * FE) / Volumen
+          // Rating = clamp(1.0 .. 10.0, 5.0 + Effizienz * 4.0)
+          const calcShotCategoryScore = (winners, unforcedErrors, forcedErrors) => {
+            const volume = winners + unforcedErrors + forcedErrors;
+            if (volume <= 0) return 5.0;
+            const efficiency = (winners * 2.0 - unforcedErrors * 1.0 - forcedErrors * 0.5) / volume;
+            return clampRating(5.0 + efficiency * 4.0);
+          };
+
+          // 2. Vorhand
+          const fhW = (st.shotBreakdown.winner['Vorhand']?.[p] || 0);
+          const fhUE = (st.shotBreakdown.ue['Vorhand UE']?.[p] || 0);
+          const fhFE = (st.shotBreakdown.fe['Vorhand FE']?.[p] || 0);
+          const fhScore = calcShotCategoryScore(fhW, fhUE, fhFE);
+
+          // 3. Rückhand
+          const bhW = (st.shotBreakdown.winner['Rückhand']?.[p] || 0);
+          const bhUE = (st.shotBreakdown.ue['Rückhand UE']?.[p] || 0);
+          const bhFE = (st.shotBreakdown.fe['Rückhand FE']?.[p] || 0);
+          const bhScore = calcShotCategoryScore(bhW, bhUE, bhFE);
+
+          // 4. Netzspiel (Volley, Smash & Stopp/Lob)
+          const netW = (st.shotBreakdown.winner['Volley']?.[p] || 0)
+            + (st.shotBreakdown.winner['Smash']?.[p] || 0)
+            + (st.shotBreakdown.winner['Stopp/Lob']?.[p] || 0);
+          const netUE = (st.shotBreakdown.ue['Volley UE']?.[p] || 0)
+            + (st.shotBreakdown.ue['Smash UE']?.[p] || 0)
+            + (st.shotBreakdown.ue['Stopp/Lob UE']?.[p] || 0);
+          const netFE = (st.shotBreakdown.fe['Volley/Netz FE']?.[p] || 0)
+            + (st.shotBreakdown.fe['Passierball/Stopp FE']?.[p] || 0);
+          const netScore = calcShotCategoryScore(netW, netUE, netFE);
+
+          // 5. Gesamt-Performance (Punktanteil, Aggressive Margin, Breakball-Effizienz & Teilbewertungen)
+          const ptsSum = (st.totalPoints[0] || 0) + (st.totalPoints[1] || 0);
+          let overallScore = 5.0;
+          if (ptsSum > 0) {
+            const ptShare = st.totalPoints[p] / ptsSum;
+            const aggNorm = Math.max(-0.25, Math.min(0.25, st.aggressiveMargin[p] / Math.max(20, ptsSum)));
+            const bpConvRate = st.bpOpportunities[p] > 0 ? (st.bpConverted[p] / st.bpOpportunities[p]) : 0.40;
+            const bpSaveRate = st.bpFaced[p] > 0 ? (st.bpSaved[p] / st.bpFaced[p]) : 0.60;
+            const subAvg = (serveScore + fhScore + bhScore + netScore) / 4;
+
+            const rawOverall = subAvg * 0.55
+              + (1.0 + ptShare * 9.0) * 0.25
+              + (5.5 + aggNorm * 14.0) * 0.12
+              + (2.5 + (bpConvRate + bpSaveRate) * 3.5) * 0.08;
+            overallScore = clampRating(rawOverall);
+          }
+
+          return {
+            serve: serveScore,
+            forehand: fhScore,
+            backhand: bhScore,
+            net: netScore,
+            overall: overallScore
+          };
+        };
+
+        return [calcPlayer(0), calcPlayer(1)];
+      }
+
+      function buildPerformanceRadarSvgMarkup(match, ratings, options = { forPrint: false }) {
+        const isDark = !options.forPrint && document.documentElement.classList.contains('dark');
+        const gridStroke = isDark ? '#334155' : '#cbd5e1';
+        const axisStroke = isDark ? '#475569' : '#94a3b8';
+        const labelFill = isDark ? '#e2e8f0' : '#0f172a';
+        const ringTextFill = isDark ? '#94a3b8' : '#64748b';
+
+        const cx = 210;
+        const cy = 178;
+        const maxR = 114;
+
+        const axes = [
+          { key: 'overall', label: 'Gesamt' },
+          { key: 'serve', label: 'Aufschlag' },
+          { key: 'forehand', label: 'Vorhand' },
+          { key: 'net', label: 'Netzspiel' },
+          { key: 'backhand', label: 'Rückhand' }
+        ];
+
+        const angleFor = (idx) => (-Math.PI / 2) + (idx * (2 * Math.PI) / axes.length);
+        const radiusForVal = (val) => {
+          const clamped = Math.max(1, Math.min(10, Number(val) || 1));
+          return ((clamped - 1) / 9) * maxR;
+        };
+
+        // Konzentrische Pentagone für Skala 2, 4, 6, 8, 10
+        const ringLevels = [2, 4, 6, 8, 10];
+        const ringsSvg = ringLevels.map(lvl => {
+          const r = radiusForVal(lvl);
+          const pts = axes.map((_, i) => {
+            const a = angleFor(i);
+            return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
+          }).join(' ');
+          return `<polygon points="${pts}" fill="none" stroke="${gridStroke}" stroke-width="${lvl === 10 ? '1.3' : '0.8'}" stroke-dasharray="${lvl === 6 ? '3 2' : 'none'}" />`;
+        }).join('');
+
+        // Achsenlinien & Skalenwerte entlang der Top-Achse
+        const axesSvg = axes.map((ax, i) => {
+          const a = angleFor(i);
+          const x2 = cx + maxR * Math.cos(a);
+          const y2 = cy + maxR * Math.sin(a);
+          const lx = cx + (maxR + 24) * Math.cos(a);
+          const ly = cy + (maxR + 20) * Math.sin(a);
+
+          let anchor = 'middle';
+          if (Math.cos(a) > 0.25) anchor = 'start';
+          else if (Math.cos(a) < -0.25) anchor = 'end';
+
+          const dy = Math.sin(a) > 0.5 ? 8 : (Math.sin(a) < -0.5 ? -2 : 4);
+
+          return `
+            <line x1="${cx}" y1="${cy}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${axisStroke}" stroke-width="0.9" />
+            <text x="${lx.toFixed(1)}" y="${(ly + dy).toFixed(1)}" text-anchor="${anchor}" fill="${labelFill}" font-size="11.5" font-weight="700" font-family="Inter, sans-serif">
+              ${escapeHtml(ax.label)}
+            </text>
+          `;
+        }).join('');
+
+        const scaleLabelsSvg = [2, 4, 6, 8, 10].map(lvl => {
+          const r = radiusForVal(lvl);
+          return `<text x="${cx + 4}" y="${(cy - r + 3).toFixed(1)}" fill="${ringTextFill}" font-size="8.5" font-weight="600" font-family="Inter, sans-serif">${lvl}</text>`;
+        }).join('');
+
+        const buildPlayerPoly = (pIdx, fillColor, strokeColor) => {
+          const rObj = ratings[pIdx] || { serve: 5, forehand: 5, backhand: 5, net: 5, overall: 5 };
+          const coords = axes.map((ax, i) => {
+            const a = angleFor(i);
+            const r = radiusForVal(rObj[ax.key]);
+            return {
+              x: cx + r * Math.cos(a),
+              y: cy + r * Math.sin(a),
+              val: rObj[ax.key]
+            };
+          });
+          const ptsStr = coords.map(c => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
+          const dots = coords.map(c => `
+            <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="4" fill="${strokeColor}" stroke="#ffffff" stroke-width="1.3" />
+          `).join('');
+          return `
+            <polygon points="${ptsStr}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2.2" stroke-linejoin="round" />
+            ${dots}
+          `;
+        };
+
+        const poly0 = buildPlayerPoly(0, 'rgba(16, 185, 129, 0.24)', options.forPrint ? '#047857' : '#10b981');
+        const poly1 = buildPlayerPoly(1, 'rgba(59, 130, 246, 0.24)', options.forPrint ? '#1d4ed8' : '#3b82f6');
+
+        return `
+          ${ringsSvg}
+          ${axesSvg}
+          ${scaleLabelsSvg}
+          ${poly0}
+          ${poly1}
+          <text x="${cx}" y="342" text-anchor="middle" fill="${ringTextFill}" font-size="9.5" font-family="Inter, sans-serif">
+            Skala 1 (schwach) bis 10 (überragend)
+          </text>
+        `;
+      }
+
+      function renderPerformanceRatingSection(match, st) {
+        const svg = document.getElementById('performanceRadarSvg');
+        const cards = document.getElementById('performanceRatingCards');
+        const legend = document.getElementById('radarLegendBadge');
+        const ratings = st.performanceRating || computePerformanceRatings(st);
+
+        if (legend) {
+          legend.innerHTML = `
+            <span class="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span>${escapeHtml(match.players[0])} (${ratings[0].overall.toFixed(1)})</span>
+            </span>
+            <span class="inline-flex items-center gap-1.5 text-blue-700 dark:text-blue-400">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+              <span>${escapeHtml(match.players[1])} (${ratings[1].overall.toFixed(1)})</span>
+            </span>
+          `;
+        }
+
+        if (svg) {
+          svg.innerHTML = buildPerformanceRadarSvgMarkup(match, ratings, { forPrint: false });
+        }
+
+        if (cards) {
+          const items = [
+            { key: 'overall', label: 'Gesamt-Performance', hint: 'Punktanteil, Aggressive Margin, Breakbälle & Gesamteffizienz', highlight: true },
+            { key: 'serve', label: 'Aufschlag', hint: '1. Aufschlag %, Punktgewinn 1./2. Aufschlag, Asse/SW vs. DF' },
+            { key: 'forehand', label: 'Vorhand', hint: 'Basis 5,0 • +2,0 Pkt./Winner, −1,0 Pkt./UE, −0,5 Pkt./FE' },
+            { key: 'backhand', label: 'Rückhand', hint: 'Basis 5,0 • +2,0 Pkt./Winner, −1,0 Pkt./UE, −0,5 Pkt./FE' },
+            { key: 'net', label: 'Netzspiel', hint: 'Volley/Smash/Stopp • Basis 5,0 (+2,0 W / −1,0 UE / −0,5 FE)' }
+          ];
+
+          cards.innerHTML = items.map(it => {
+            const v0 = ratings[0][it.key];
+            const v1 = ratings[1][it.key];
+            const p0 = Math.round(((v0 - 1) / 9) * 100);
+            const p1 = Math.round(((v1 - 1) / 9) * 100);
+
+            return `
+              <div class="p-3 rounded-xl border ${it.highlight ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-slate-300/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40'}">
+                <div class="flex items-center justify-between gap-2 text-xs sm:text-sm mb-1">
+                  <span class="font-extrabold text-emerald-700 dark:text-emerald-400 tabular-nums">${v0.toFixed(1)} / 10</span>
+                  <span class="font-bold text-slate-900 dark:text-white">${escapeHtml(it.label)}</span>
+                  <span class="font-extrabold text-blue-700 dark:text-blue-400 tabular-nums">${v1.toFixed(1)} / 10</span>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 text-center mb-2">${escapeHtml(it.hint)}</p>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex justify-end">
+                    <div class="bg-emerald-500 h-full rounded-full" style="width: ${p0}%"></div>
+                  </div>
+                  <div class="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                    <div class="bg-blue-500 h-full rounded-full" style="width: ${p1}%"></div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
       }
 
       // =========================================================================
@@ -2529,6 +2808,7 @@
 
         const stats = computeMatchStatistics(match, uiState.selectedSetFilter);
         renderMomentumSvg(match, uiState.selectedSetFilter);
+        renderPerformanceRatingSection(match, stats);
         renderKeyStatsCards(match, stats);
         renderShotTreeView(match, stats);
         renderAnalyseSideLists(match, uiState.selectedSetFilter);
@@ -3065,15 +3345,48 @@
 
             <div class="print-section">
               <h2 style="font-size: 12pt; font-weight: 700; margin: 0 0 6pt 0; border-left: 3pt solid #047857; padding-left: 6pt;">
-                1. Momentum-Verlauf (Punkte-Differenz &amp; Notiz-Markierungen)
+                1B. Performance-Rating (Skala 1 – 10)
               </h2>
-              <div style="border: 1px solid #cbd5e1; padding: 6pt 8pt; background: #ffffff;">
-                <svg viewBox="0 0 800 220" width="100%" style="height: 44mm; display: block;" role="img" aria-label="Momentum-Verlauf">
-                  ${momentumInnerSvg}
+              <div style="display: flex; align-items: center; gap: 12pt; border: 1px solid #cbd5e1; padding: 6pt 8pt; background: #ffffff;">
+                <svg viewBox="0 0 420 350" style="width: 58mm; height: 48mm; display: block; flex-shrink: 0;" role="img" aria-label="Performance Spiderweb">
+                  ${buildPerformanceRadarSvgMarkup(match, st.performanceRating, { forPrint: true })}
                 </svg>
-                <div style="font-size: 8.5pt; color: #475569; margin-top: 4pt;">
-                  <strong>Lesehilfe:</strong> Grün = ${escapeHtml(match.players[0])} in Führung • Blau = ${escapeHtml(match.players[1])} in Führung • Gestrichelte vertikale Linien = Satzwechsel • Bernsteinfarbene Punkte = Seitenwechsel- &amp; Coaching-Notizen.
-                </div>
+                <table style="flex: 1;">
+                  <thead>
+                    <tr>
+                      <th style="text-align: left;">Kategorie (1–10)</th>
+                      <th style="text-align: right;">${escapeHtml(match.players[0])}</th>
+                      <th style="text-align: right;">${escapeHtml(match.players[1])}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="background-color: #ecfdf5; font-weight: 700;">
+                      <td>Gesamt-Performance</td>
+                      <td style="text-align: right;">${st.performanceRating[0].overall.toFixed(1)} / 10</td>
+                      <td style="text-align: right;">${st.performanceRating[1].overall.toFixed(1)} / 10</td>
+                    </tr>
+                    <tr>
+                      <td>Aufschlag</td>
+                      <td style="text-align: right;">${st.performanceRating[0].serve.toFixed(1)} / 10</td>
+                      <td style="text-align: right;">${st.performanceRating[1].serve.toFixed(1)} / 10</td>
+                    </tr>
+                    <tr>
+                      <td>Vorhand</td>
+                      <td style="text-align: right;">${st.performanceRating[0].forehand.toFixed(1)} / 10</td>
+                      <td style="text-align: right;">${st.performanceRating[1].forehand.toFixed(1)} / 10</td>
+                    </tr>
+                    <tr>
+                      <td>Rückhand</td>
+                      <td style="text-align: right;">${st.performanceRating[0].backhand.toFixed(1)} / 10</td>
+                      <td style="text-align: right;">${st.performanceRating[1].backhand.toFixed(1)} / 10</td>
+                    </tr>
+                    <tr>
+                      <td>Netzspiel</td>
+                      <td style="text-align: right;">${st.performanceRating[0].net.toFixed(1)} / 10</td>
+                      <td style="text-align: right;">${st.performanceRating[1].net.toFixed(1)} / 10</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -3580,6 +3893,110 @@
           });
         }
         curY -= (chartBoxH + 10);
+
+        // --- 1B. PERFORMANCE-RATING SPIDERWEB (SKALA 1 - 10) ---
+        drawSectionHeader('1B. Performance-Rating Spiderweb (Skala 1.0 - 10.0)');
+        const radarBoxH = 128;
+        ensureSpace(radarBoxH + 10);
+        drawRect(marginL, curY, contentW, radarBoxH, [1, 1, 1], [0.80, 0.84, 0.88], 0.6);
+
+        const rCx = marginL + 95;
+        const rCy = curY - 64;
+        const rMax = 44;
+        const rAxes = [
+          { key: 'overall', label: 'Gesamt' },
+          { key: 'serve', label: 'Aufschlag' },
+          { key: 'forehand', label: 'Vorhand' },
+          { key: 'net', label: 'Netzspiel' },
+          { key: 'backhand', label: 'Rueckhand' }
+        ];
+        const rAngle = (idx) => (-Math.PI / 2) + (idx * (2 * Math.PI) / rAxes.length);
+        const rRad = (val) => ((Math.max(1, Math.min(10, Number(val) || 1)) - 1) / 9) * rMax;
+
+        // Konzentrische Ringe (2, 4, 6, 8, 10)
+        [2, 4, 6, 8, 10].forEach(lvl => {
+          const rr = rRad(lvl);
+          ops.push('q');
+          ops.push('0.80 0.84 0.88 RG');
+          ops.push(lvl === 10 ? '0.8 w' : '0.45 w');
+          rAxes.forEach((_, idx) => {
+            const a = rAngle(idx);
+            const px = rCx + rr * Math.cos(a);
+            const py = rCy - rr * Math.sin(a);
+            ops.push(`${fNum(px)} ${fNum(py)} ${idx === 0 ? 'm' : 'l'}`);
+          });
+          ops.push('h S Q');
+        });
+
+        // Achsen & Beschriftungen
+        rAxes.forEach((ax, idx) => {
+          const a = rAngle(idx);
+          const x2 = rCx + rMax * Math.cos(a);
+          const y2 = rCy - rMax * Math.sin(a);
+          drawLine(rCx, rCy, x2, y2, [0.65, 0.70, 0.78], 0.55);
+
+          const lx = rCx + (rMax + 11) * Math.cos(a);
+          const ly = rCy - (rMax + 9) * Math.sin(a) - 2.5;
+          const align = Math.cos(a) > 0.25 ? 'left' : (Math.cos(a) < -0.25 ? 'right' : 'center');
+          drawText(ax.label, lx, ly, { bold: true, size: 7.2, color: [0.15, 0.20, 0.28], align });
+        });
+
+        // Polygon Spieler 1 (Grün) & Spieler 2 (Blau)
+        const ratings = st.performanceRating || computePerformanceRatings(st);
+        [
+          { pIdx: 0, stroke: [0.02, 0.47, 0.34] },
+          { pIdx: 1, stroke: [0.11, 0.31, 0.85] }
+        ].forEach(cfg => {
+          ops.push('q');
+          ops.push(`${cfg.stroke[0]} ${cfg.stroke[1]} ${cfg.stroke[2]} RG`);
+          ops.push('1.4 w');
+          rAxes.forEach((ax, idx) => {
+            const a = rAngle(idx);
+            const rr = rRad(ratings[cfg.pIdx][ax.key]);
+            const px = rCx + rr * Math.cos(a);
+            const py = rCy - rr * Math.sin(a);
+            ops.push(`${fNum(px)} ${fNum(py)} ${idx === 0 ? 'm' : 'l'}`);
+          });
+          ops.push('h S Q');
+        });
+
+        // Rechts neben dem Spiderweb: Kompakte 1-10 Bewertungstabelle
+        const rtX = marginL + 198;
+        const rtW = contentW - 208;
+        const rtCols = [rtW * 0.46, rtW * 0.27, rtW * 0.27];
+        let rtY = curY - 12;
+
+        drawRect(rtX, rtY, rtW, 16, [0.06, 0.09, 0.16], [0.80, 0.84, 0.88], 0.4);
+        drawText('Bewertung (1-10)', rtX + 5, rtY - 11, { bold: true, size: 7.8, color: [1, 1, 1] });
+        drawText(match.players[0], rtX + rtCols[0] + rtCols[1] - 5, rtY - 11, { bold: true, size: 7.8, color: [1, 1, 1], align: 'right' });
+        drawText(match.players[1], rtX + rtW - 5, rtY - 11, { bold: true, size: 7.8, color: [1, 1, 1], align: 'right' });
+        rtY -= 16;
+
+        const rRows = [
+          { label: 'Gesamt-Performance', key: 'overall', bold: true },
+          { label: 'Aufschlag', key: 'serve', bold: false },
+          { label: 'Vorhand', key: 'forehand', bold: false },
+          { label: 'Rueckhand', key: 'backhand', bold: false },
+          { label: 'Netzspiel', key: 'net', bold: false }
+        ];
+        rRows.forEach((rr, idx) => {
+          const fill = rr.bold ? [0.93, 0.99, 0.96] : (idx % 2 === 1 ? [0.97, 0.98, 0.99] : [1, 1, 1]);
+          drawRect(rtX, rtY, rtW, 17, fill, [0.82, 0.85, 0.90], 0.4);
+          drawText(rr.label, rtX + 5, rtY - 11.5, { bold: rr.bold, size: 8.0, color: [0.06, 0.09, 0.16] });
+          drawText(`${ratings[0][rr.key].toFixed(1)} / 10`, rtX + rtCols[0] + rtCols[1] - 5, rtY - 11.5, {
+            bold: true, size: 8.0, color: [0.02, 0.47, 0.34], align: 'right'
+          });
+          drawText(`${ratings[1][rr.key].toFixed(1)} / 10`, rtX + rtW - 5, rtY - 11.5, {
+            bold: true, size: 8.0, color: [0.11, 0.31, 0.85], align: 'right'
+          });
+          rtY -= 17;
+        });
+
+        drawText('VH/RH/Netz: Basis 5.0 (+2.0 W / -1.0 UE / -0.5 FE)', rtX, rtY - 10, {
+          size: 6.8, color: [0.40, 0.45, 0.53]
+        });
+
+        curY -= (radarBoxH + 10);
 
         // --- 2. MATCH-KENNZAHLEN & RALLYE-LÄNGEN ---
         drawSectionHeader('2. Match-Kennzahlen & Rallye-Längen');
