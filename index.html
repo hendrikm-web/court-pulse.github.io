@@ -190,7 +190,7 @@
 
     <!-- ANSICHT 1: START & ARCHIV -->
     <main id="viewStart" class="space-y-6">
-      <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 p-4 sm:p-6 shadow-sm">
+      <section id="newMatchCardSection" class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 p-4 sm:p-6 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-5">
           <div>
             <h1 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Neues Match starten</h1>
@@ -303,6 +303,22 @@
         </div>
 
         <div id="matchArchiveList" class="space-y-3"></div>
+      </section>
+
+      <!-- Hinweis für Livescore-Empfänger (keine eigene Match-Erstellung möglich) -->
+      <section id="spectatorLockedNotice" class="hidden rounded-2xl bg-emerald-500/10 border border-emerald-500/40 p-4 sm:p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-sm sm:text-base font-bold text-emerald-950 dark:text-emerald-200">Livescore-Empfänger-Ansicht</h2>
+            <p class="text-xs sm:text-sm text-emerald-900/80 dark:text-emerald-300/90 mt-0.5">
+              Über einen geteilten Live-Link kannst du das aktuelle Match live verfolgen und analysieren. Das Erstellen eigener Matches ist für Livescore-Empfänger deaktiviert.
+            </p>
+          </div>
+          <button id="backToSpectatorLiveBtn" type="button"
+            class="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shrink-0">
+            Zurück zum Live-Score
+          </button>
+        </div>
       </section>
     </main>
 
@@ -741,10 +757,6 @@
           ● Bereit für Echtzeit-Sync
         </span>
         <div class="flex flex-wrap items-center gap-2">
-          <button id="toggleFirebaseConfigBtn" type="button"
-            class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
-            Firebase-Daten ändern
-          </button>
           <a id="whatsappShareLiveBtn" href="#" target="_blank" rel="noopener noreferrer"
             class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white inline-flex items-center gap-1">
             <span>WhatsApp</span>
@@ -803,6 +815,10 @@
 
       // Fest vorkonfigurierte Firebase Realtime Database URL für sofortiges Live-Sharing auf allen Geräten:
       const DEFAULT_FIREBASE_DB_URL = 'https://court-pulse-7e8ed-default-rtdb.europe-west1.firebasedatabase.app';
+
+      // Trennung zwischen aktivem Nutzer (Tracker) und Livescore-Empfänger (Zuschauer):
+      // Für Livescore-Empfänger ist die Erstellung eigener Matches immer gesperrt.
+      const ALLOW_SPECTATOR_CREATE_MATCHES = false;
 
       const SHOT_TREE_SPEC = [
         {
@@ -2249,6 +2265,9 @@
       // 9. UI-RENDERING (START, LIVE, ANALYSE)
       // =========================================================================
       function switchTab(tabName) {
+        if (uiState.isSpectator && !ALLOW_SPECTATOR_CREATE_MATCHES && tabName === 'start') {
+          tabName = 'live';
+        }
         uiState.activeTab = tabName;
         const tabs = { start: 'viewStart', live: 'viewLive', analyse: 'viewAnalyse' };
         Object.entries(tabs).forEach(([key, viewId]) => {
@@ -2268,6 +2287,11 @@
       }
 
       function renderStartView() {
+        const isLockedSpectator = Boolean(uiState.isSpectator && !ALLOW_SPECTATOR_CREATE_MATCHES);
+        document.getElementById('newMatchCardSection')?.classList.toggle('hidden', isLockedSpectator);
+        document.getElementById('spectatorLockedNotice')?.classList.toggle('hidden', !isLockedSpectator);
+        document.getElementById('tabStart')?.classList.toggle('hidden', isLockedSpectator);
+
         const listEl = document.getElementById('matchArchiveList');
         const datalist = document.getElementById('knownPlayersList');
         const playersSet = new Set(['Moritz', 'Felix Meinen']);
@@ -3810,13 +3834,11 @@
 
       function openLiveShareModal() {
         const match = getActiveMatch();
-        if (!match) return;
+        if (!match || uiState.isSpectator) return;
         const dbUrl = getConfiguredFirebaseDbUrl();
-        const urlInput = document.getElementById('firebaseDbUrlInput');
-        if (urlInput) urlInput.value = dbUrl;
 
-        const cfgPanel = document.getElementById('firebaseConfigPanel');
-        if (cfgPanel) cfgPanel.classList.toggle('hidden', Boolean(dbUrl));
+        // Nutzer, die den Live-Link-Button drücken, sehen keinen Button zum Ändern der Firebase-Daten:
+        document.getElementById('firebaseConfigPanel')?.classList.add('hidden');
 
         updateLiveShareLinks(match);
         document.getElementById('liveShareModalBackdrop')?.classList.remove('hidden');
@@ -3839,6 +3861,10 @@
         // Neues Match Formular
         document.getElementById('newMatchForm')?.addEventListener('submit', (ev) => {
           ev.preventDefault();
+          if (uiState.isSpectator && !ALLOW_SPECTATOR_CREATE_MATCHES) {
+            showToast('Livescore-Empfänger können keine eigenen Matches erstellen.', 'warn');
+            return;
+          }
           const p0 = String(document.getElementById('player0Input')?.value || '').trim() || 'Spieler 1';
           const p1 = String(document.getElementById('player1Input')?.value || '').trim() || 'Spieler 2';
           const tournament = String(document.getElementById('tournamentInput')?.value || '').trim() || 'Vereins- & Turniermatch';
@@ -3875,6 +3901,10 @@
 
         // Demo-Match erzeugen
         document.getElementById('createDemoMatchBtn')?.addEventListener('click', () => {
+          if (uiState.isSpectator && !ALLOW_SPECTATOR_CREATE_MATCHES) {
+            showToast('Livescore-Empfänger können keine eigenen Matches erstellen.', 'warn');
+            return;
+          }
           const demo = buildDemoMatchObject();
           appData.matches.unshift(demo);
           appData.activeMatchId = demo.id;
@@ -3980,9 +4010,7 @@
         document.getElementById('closeLiveShareBtn')?.addEventListener('click', closeLiveShareModal);
         document.getElementById('liveShareModalBackdrop')?.addEventListener('click', closeLiveShareModal);
 
-        document.getElementById('toggleFirebaseConfigBtn')?.addEventListener('click', () => {
-          document.getElementById('firebaseConfigPanel')?.classList.toggle('hidden');
-        });
+        document.getElementById('backToSpectatorLiveBtn')?.addEventListener('click', () => switchTab('live'));
 
         document.getElementById('copyLiveUrlBtn')?.addEventListener('click', async () => {
           const url = document.getElementById('liveShareUrlInput')?.value || '';
