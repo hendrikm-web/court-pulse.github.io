@@ -381,10 +381,6 @@
               class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500">
               ↻ Aktualisieren
             </button>
-            <button id="exitSpectatorBtn" type="button"
-              class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-slate-100">
-              Eigene App öffnen
-            </button>
           </div>
         </div>
 
@@ -460,19 +456,16 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <!-- Zustands-Button: '1. Aufschlag Fehler' <-> roter 'Doppelfehler' -->
           <button id="serveFaultBtn" type="button"
             class="py-3.5 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] border bg-amber-500/15 hover:bg-amber-500/25 text-amber-900 dark:text-amber-300 border-amber-500/40">
             1. Aufschlag Fehler
           </button>
 
-          <!-- Direkter 1-Tap Ass Button -->
           <button id="aceBtn" type="button"
             class="py-3.5 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm">
             ⚡ Ass
           </button>
 
-          <!-- Direkter 1-Tap Service Winner Button -->
           <button id="serviceWinnerBtn" type="button"
             class="py-3.5 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] bg-teal-600 hover:bg-teal-500 text-white shadow-sm">
             🎾 Service Winner
@@ -516,7 +509,6 @@
 
     <!-- ANSICHT 3: STATISTIK, MOMENTUM & PDF-REPORT -->
     <main id="viewAnalyse" class="hidden space-y-5">
-      <!-- Kopfzeile Analyse mit Satzfilter & direktem PDF-Export -->
       <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
@@ -525,10 +517,8 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
-            <!-- Satzfilter -->
             <div id="setFilterBar" class="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-300 dark:border-slate-700"></div>
 
-            <!-- Direkter PDF-Export Button -->
             <button id="directPdfBtn" type="button"
               class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white shadow-sm shadow-emerald-600/20 transition-all flex items-center gap-2">
               <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -543,7 +533,7 @@
         </div>
       </section>
 
-      <!-- Interaktives Zweifarben-SVG-Momentum-Diagramm mit Satz-Trennlinien & klickbaren Notiz-Pins -->
+      <!-- Interaktives Zweifarben-SVG-Momentum-Diagramm -->
       <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div>
@@ -627,7 +617,6 @@
       </button>
     </div>
 
-    <!-- Schritt 1: Ballwechsel-Länge -->
     <div class="mb-4">
       <div class="flex items-center justify-between mb-2">
         <span class="text-xs font-bold text-slate-600 dark:text-slate-400">1. Ballwechsel-Länge</span>
@@ -651,7 +640,6 @@
       </div>
     </div>
 
-    <!-- Schritt 2: Schlagart wählen -->
     <div class="mb-4">
       <span class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">2. Schlagart</span>
       <div class="grid grid-cols-3 gap-2">
@@ -682,7 +670,6 @@
       </div>
     </div>
 
-    <!-- Schritt 3: Ausgang / Kategorie -->
     <div>
       <span class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">3. Ausgang / Kategorie</span>
       <div class="grid grid-cols-3 gap-2.5">
@@ -722,7 +709,7 @@
     </div>
   </div>
 
-  <!-- MODAL FÜR LIVE-LINK & FIREBASE-KONFIGURATION -->
+  <!-- MODAL FÜR LIVE-LINK -->
   <div id="liveShareModalBackdrop" class="hidden fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-[2px]"></div>
   <div id="liveShareModalBox" role="dialog" aria-modal="true" aria-labelledby="liveShareModalTitle"
     class="hidden fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-lg mx-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-5 shadow-2xl space-y-4">
@@ -768,31 +755,6 @@
         </div>
       </div>
     </div>
-
-    <div id="firebaseConfigPanel" class="hidden pt-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
-      <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-950 dark:text-amber-200 space-y-1">
-        <p class="font-bold">Kostenlose Firebase Realtime Database einrichten (einmalig 2 Min.):</p>
-        <p>1. Auf <strong>console.firebase.google.com</strong> kostenloses Projekt anlegen &rarr; <strong>Realtime Database</strong> aktivieren (Testmodus).</p>
-        <p>2. Die <strong>Database URL</strong> (z. B. <code>https://dein-projekt-default-rtdb.europe-west1.firebasedatabase.app</code>) hier einfügen:</p>
-      </div>
-      <div>
-        <label for="firebaseDbUrlInput" class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-          Firebase Realtime Database URL
-        </label>
-        <input id="firebaseDbUrlInput" type="url" placeholder="https://dein-projekt-default-rtdb.europe-west1.firebasedatabase.app"
-          class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-      </div>
-      <div class="flex flex-wrap items-center justify-end gap-2">
-        <button id="testLiveSyncBtn" type="button"
-          class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
-          Verbindung testen
-        </button>
-        <button id="saveFirebaseConfigBtn" type="button"
-          class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white">
-          Speichern &amp; Live-Stream starten
-        </button>
-      </div>
-    </div>
   </div>
 
   <!-- DEDIZIERTER DRUCK- / PDF-BERICHTSCONTAINER -->
@@ -805,19 +767,12 @@
     (function () {
       'use strict';
 
-      // =========================================================================
-      // 1. KONSTANTEN & SPEICHERSTRUKTUR (SELF-HEALING LOCALSTORAGE)
-      // =========================================================================
       const STORAGE_KEY = 'courtpulse_pro_data_v1';
       const THEME_KEY = 'courtpulse_pro_theme_v1';
       const FIREBASE_DB_KEY = 'courtpulse_pro_firebase_db_v1';
-      const MAX_U10_SECONDS = 3600; // 60 Minuten
+      const MAX_U10_SECONDS = 3600;
 
-      // Fest vorkonfigurierte Firebase Realtime Database URL für sofortiges Live-Sharing auf allen Geräten:
       const DEFAULT_FIREBASE_DB_URL = 'https://court-pulse-7e8ed-default-rtdb.europe-west1.firebasedatabase.app';
-
-      // Trennung zwischen aktivem Nutzer (Tracker) und Livescore-Empfänger (Zuschauer):
-      // Für Livescore-Empfänger ist die Erstellung eigener Matches immer gesperrt.
       const ALLOW_SPECTATOR_CREATE_MATCHES = false;
 
       const SHOT_TREE_SPEC = [
@@ -881,7 +836,6 @@
         selectedSetFilter: 'all',
         expandedTreeNodes: { winner: true, ue: true, fe: false },
         selectedNoteId: null,
-        selfHealMessages: [],
         timerIntervalId: null,
         isSpectator: false,
         spectatorMatchId: null,
@@ -890,9 +844,6 @@
         liveShareActive: false
       };
 
-      // =========================================================================
-      // 2. HILFSFUNKTIONEN, FORMATIERUNG & TIMER
-      // =========================================================================
       function escapeHtml(str) {
         return String(str ?? '')
           .replace(/&/g, '&amp;')
@@ -1031,9 +982,6 @@
         } catch (_) {}
       }
 
-      // =========================================================================
-      // 3. TENNIS-ZÄHLLOGIK (INCL. CHAMPIONS CUP U10, TIEBREAK, BREAKBALL & SEITENWECHSEL)
-      // =========================================================================
       function createInitialMatchState(format, firstServer) {
         const fmt = normalizeFormatCode(format);
         const startGames = fmt === 'champions_u10' ? [2, 2] : [0, 0];
@@ -1105,7 +1053,7 @@
             }
           }
           if (winsSetNow) {
-            if (setsWon[p] + 1 >= 2 || fmt === 'champions_u10' && state.currentSet === 3) {
+            if (setsWon[p] + 1 >= 2 || (fmt === 'champions_u10' && state.currentSet === 3)) {
               return 'MATCHBALL';
             }
             return 'SATZBALL';
@@ -1147,11 +1095,9 @@
 
         if (next.completed) return { nextState: next, matchWinner: null };
 
-        // Tiebreak oder Match-Tiebreak
         if (next.isTiebreak || next.isMatchTiebreak) {
           next.points[w] += 1;
           const totalTbPts = next.points[0] + next.points[1];
-          // Aufschlagwechsel im Tiebreak nach dem 1. Punkt und danach alle 2 Punkte
           if (totalTbPts % 2 === 1) {
             next.server = 1 - next.server;
           }
@@ -1187,7 +1133,6 @@
           return { nextState: next, matchWinner: null };
         }
 
-        // Reguläres Spiel
         next.points[w] += 1;
         let gameWon = false;
         if (next.points[w] >= 4 && (next.points[w] - next.points[l]) >= 2) {
@@ -1199,7 +1144,6 @@
           next.points = [0, 0];
           next.server = 1 - next.server;
 
-          // Prüfen auf Satzende oder Tiebreak bei 6:6
           if (next.games[0] === 6 && next.games[1] === 6) {
             next.isTiebreak = true;
             next.tiebreakTarget = 7;
@@ -1227,9 +1171,6 @@
         return { nextState: next, matchWinner: null };
       }
 
-      // =========================================================================
-      // 4. SPEICHER-REPARATUR & REPLAY-ENGINE
-      // =========================================================================
       function normalizeShotLabel(category, rawShot) {
         const s = String(rawShot ?? '').trim();
         if (category === 'double_fault') return 'Doppelfehler';
@@ -1250,7 +1191,7 @@
         return s || 'Vorhand';
       }
 
-      function sanitizeAndRebuildMatch(rawMatch, idx = 0, healLog = null) {
+      function sanitizeAndRebuildMatch(rawMatch, idx = 0) {
         const m = (rawMatch && typeof rawMatch === 'object') ? rawMatch : {};
         const format = normalizeFormatCode(m.format);
         const firstServer = Number(m.firstServer) === 1 ? 1 : 0;
@@ -1337,38 +1278,6 @@
         } catch (_) {}
       }
 
-      function loadAndHealStorage() {
-        const healLog = [];
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) {
-            const demo = buildDemoMatchObject();
-            appData = { app: 'CourtPulse Pro', activeMatchId: demo.id, matches: [demo] };
-            persistStorage();
-            return;
-          }
-          const parsed = JSON.parse(raw);
-          const list = Array.isArray(parsed?.matches) ? parsed.matches : [];
-          if (!list.length) {
-            const demo = buildDemoMatchObject();
-            appData = { app: 'CourtPulse Pro', activeMatchId: demo.id, matches: [demo] };
-            persistStorage();
-            return;
-          }
-          appData.matches = list.map((m, i) => sanitizeAndRebuildMatch(m, i, healLog));
-          appData.activeMatchId = parsed.activeMatchId || appData.matches[0].id;
-          if (!appData.matches.some(m => m.id === appData.activeMatchId)) {
-            appData.activeMatchId = appData.matches[0].id;
-          }
-        } catch (_) {
-          const demo = buildDemoMatchObject();
-          appData = { app: 'CourtPulse Pro', activeMatchId: demo.id, matches: [demo] };
-          persistStorage();
-          const notice = document.getElementById('selfHealNotice');
-          if (notice) notice.classList.remove('hidden');
-        }
-      }
-
       function buildDemoMatchObject() {
         const demoPtsSpec = [
           [1,'winner','Vorhand','0-4',true],[1,'ue','Return UE','0-4',true],[1,'ue','Return UE','0-4',true],[1,'winner','Ass','0-4',true],
@@ -1399,7 +1308,6 @@
           [1,'ue','Rückhand UE','0-4',true],[0,'winner','Vorhand','5-8',true],[1,'ue','Return UE','0-4',true],[0,'winner','Service Winner','0-4',true],
           [0,'ue','Rückhand UE','0-4',false],[1,'fe','Return FE','0-4',true],[1,'winner','Vorhand','5-8',true],[0,'fe','Vorhand FE','5-8',false],
           [1,'ue','Rückhand UE','5-8',true],[1,'ue','Return UE','0-4',true],
-          // Satz 2 (62 Punkte -> 111..172)
           [0,'winner','Ass','0-4',true],[1,'winner','Rückhand','0-4',true],[0,'winner','Service Winner','0-4',true],[1,'winner','Rückhand','0-4',false],
           [0,'ue','Vorhand UE','0-4',true],[0,'ue','Return UE','0-4',true],[1,'winner','Ass','0-4',true],[0,'double_fault','Doppelfehler','0-4',false],
           [1,'ue','Return UE','0-4',true],[0,'ue','Vorhand UE','0-4',true],[1,'fe','Vorhand FE','0-4',false],[0,'fe','Vorhand FE','5-8',true],
@@ -1466,12 +1374,39 @@
             firstServeIn: p[4]
           })),
           notes: demoNotes
-        }, 0, null);
+        }, 0);
       }
 
-      // =========================================================================
-      // 5. LIVE-STREAMING & SHARED-LINK ENGINE (FIREBASE REST + ZUSCHAUER-MODUS)
-      // =========================================================================
+      function loadAndHealStorage() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            const demo = buildDemoMatchObject();
+            appData = { app: 'CourtPulse Pro', activeMatchId: demo.id, matches: [demo] };
+            persistStorage();
+            return;
+          }
+          const parsed = JSON.parse(raw);
+          const list = Array.isArray(parsed?.matches) ? parsed.matches : [];
+          if (!list.length) {
+            const demo = buildDemoMatchObject();
+            appData = { app: 'CourtPulse Pro', activeMatchId: demo.id, matches: [demo] };
+            persistStorage();
+            return;
+          }
+          appData.matches = list.map((m, i) => sanitizeAndRebuildMatch(m, i));
+          appData.activeMatchId = parsed.activeMatchId || appData.matches[0].id;
+          if (!appData.matches.some(m => m.id === appData.activeMatchId)) {
+            appData.activeMatchId = appData.matches[0].id;
+          }
+        } catch (_) {
+          const demo = buildDemoMatchObject();
+          appData = { app: 'CourtPulse Pro', activeMatchId: demo.id, matches: [demo] };
+          persistStorage();
+          document.getElementById('selfHealNotice')?.classList.remove('hidden');
+        }
+      }
+
       function normalizeFirebaseDbUrl(rawUrl) {
         const trimmed = String(rawUrl ?? '').trim().replace(/\/+$/, '');
         if (!trimmed) return '';
@@ -1578,13 +1513,13 @@
           if (!silent) {
             showToast('Live-Stream erfolgreich verbunden & synchronisiert!', 'success');
           }
-        } catch (err) {
+        } catch (_) {
           if (statusEl) {
             statusEl.textContent = '⚠ Sync-Fehler (Firebase URL oder Schreibrechte prüfen)';
             statusEl.className = 'text-xs font-semibold text-rose-600 dark:text-rose-400';
           }
           if (!silent) {
-            showToast('Verbindung zu Firebase fehlgeschlagen. Bitte URL & Testmodus-Regeln prüfen.', 'error');
+            showToast('Verbindung zu Firebase fehlgeschlagen.', 'error');
           }
         }
       }
@@ -1605,7 +1540,7 @@
             if (syncLbl) syncLbl.textContent = 'Warte auf ersten Punkt...';
             return;
           }
-          const cleanMatch = sanitizeAndRebuildMatch(remoteData, 0, null);
+          const cleanMatch = sanitizeAndRebuildMatch(remoteData, 0);
           cleanMatch.durationRunning = false;
           appData.matches = [cleanMatch];
           appData.activeMatchId = cleanMatch.id;
@@ -1632,7 +1567,7 @@
             tournament: 'Live-Übertragung wird geladen...',
             points: [],
             notes: []
-          }, 0, null);
+          }, 0);
           appData = { app: 'CourtPulse Pro', activeMatchId: placeholder.id, matches: [placeholder] };
 
           fetchSpectatorMatchSnapshot(false);
@@ -1643,14 +1578,23 @@
         }
       }
 
+      function openLiveShareModal() {
+        const match = getActiveMatch();
+        if (!match || uiState.isSpectator) return;
+        const dbUrl = getConfiguredFirebaseDbUrl();
+        updateLiveShareLinks(match);
+        document.getElementById('liveShareModalBackdrop')?.classList.remove('hidden');
+        document.getElementById('liveShareModalBox')?.classList.remove('hidden');
+        if (dbUrl) {
+          pushMatchToLiveCloud(match, true);
+        }
+      }
+
       function closeLiveShareModal() {
         document.getElementById('liveShareModalBackdrop')?.classList.add('hidden');
         document.getElementById('liveShareModalBox')?.classList.add('hidden');
       }
 
-      // =========================================================================
-      // 6. INTERAKTIVE LIVE-ERFASSUNG & TIMER-STEUERUNG
-      // =========================================================================
       function resetServeState() {
         uiState.serveAttempt = 1;
         updateServeButtonsVisual();
@@ -1835,7 +1779,7 @@
         match.state.completed = false;
         match.winnerIndex = null;
         match.endedByTime = false;
-        const rebuilt = sanitizeAndRebuildMatch(match, 0, null);
+        const rebuilt = sanitizeAndRebuildMatch(match, 0);
         Object.assign(match, rebuilt);
         resetServeState();
         persistStorage();
@@ -1973,9 +1917,6 @@
         }, 1000);
       }
 
-      // =========================================================================
-      // 7. STATISTIK-BERECHNUNG & PERFORMANCE-RATING (SKALA 1–10)
-      // =========================================================================
       function getFilteredPoints(match, setFilter) {
         if (!match || !Array.isArray(match.points)) return [];
         if (setFilter === 'all') return match.points;
@@ -2116,9 +2057,6 @@
         return st;
       }
 
-      // =========================================================================
-      // 8. SVG DIAGRAMME (MOMENTUM & PERFORMANCE SPIDERWEB)
-      // =========================================================================
       function buildMomentumSvgMarkup(match, setFilter, opts = {}) {
         const pts = getFilteredPoints(match, setFilter);
         const notes = (match.notes || []).filter(n =>
@@ -2200,7 +2138,7 @@
         `;
       }
 
-      function buildPerformanceRadarSvgMarkup(match, ratings, opts = {}) {
+      function buildPerformanceRadarSvgMarkup(_match, ratings, opts = {}) {
         const isDark = !opts.forPrint && document.documentElement.classList.contains('dark');
         const gridStroke = isDark ? '#334155' : '#cbd5e1';
         const labelFill = isDark ? '#e2e8f0' : '#1e293b';
@@ -2261,9 +2199,6 @@
         `;
       }
 
-      // =========================================================================
-      // 9. UI-RENDERING (START, LIVE, ANALYSE)
-      // =========================================================================
       function switchTab(tabName) {
         if (uiState.isSpectator && !ALLOW_SPECTATOR_CREATE_MATCHES && tabName === 'start') {
           tabName = 'live';
@@ -2368,7 +2303,6 @@
         document.getElementById('livePoints0').textContent = formatPointDisplay(match.state, 0);
         document.getElementById('livePoints1').textContent = formatPointDisplay(match.state, 1);
 
-        // Spezial-Situationen (Breakball / Satzball / Matchball / Seitenwechsel)
         const sitBadge = document.getElementById('liveSituationBadge');
         const setOrMatch = isSetOrMatchPointSituation(match.state, match.format);
         const isBp = isBreakPointSituation(match.state);
@@ -2396,7 +2330,6 @@
           if (tBtn) tBtn.textContent = match.u10TimerRunning ? 'Pause' : 'Start';
         }
 
-        // Zuschauer-Modus UI anpassen
         document.getElementById('spectatorBanner')?.classList.toggle('hidden', !uiState.isSpectator);
         document.getElementById('liveServeSection')?.classList.toggle('hidden', uiState.isSpectator);
         document.getElementById('livePointsSection')?.classList.toggle('hidden', uiState.isSpectator);
@@ -2407,7 +2340,6 @@
 
         updateServeButtonsVisual();
 
-        // Notizen im Live-Tab
         const notesList = document.getElementById('liveNotesList');
         const notesCount = document.getElementById('liveNotesCount');
         if (notesCount) notesCount.textContent = `${match.notes.length} Notizen`;
@@ -2421,108 +2353,6 @@
             `).join('')
             : `<p class="text-slate-500 dark:text-slate-400 italic">Noch keine Seitenwechsel-Notizen erfasst.</p>`;
         }
-      }
-
-      function renderAnalyseView() {
-        const match = getActiveMatch();
-        if (!match) return;
-
-        document.getElementById('analyseTitle').textContent = `${match.players[0]} vs. ${match.players[1]}`;
-        const setsStr = (match.state.sets || []).map(s => `${s[0]}:${s[1]}`).join(' • ') || 'Laufend';
-        document.getElementById('analyseMeta').textContent =
-          `${match.tournament} • ${match.surface} • ${formatDateDe(match.date)} • Stand: ${setsStr} • Dauer: ${formatDurationText(getMatchDurationSeconds(match))}`;
-
-        // Satzfilter-Leiste
-        const maxSet = Math.max(match.state.currentSet, ...(match.points || []).map(p => p.setNumber || 1));
-        const filterBtns = [{ key: 'all', label: 'Gesamt' }];
-        for (let s = 1; s <= maxSet; s++) {
-          filterBtns.push({ key: String(s), label: `Satz ${s}` });
-        }
-        const filterBar = document.getElementById('setFilterBar');
-        if (filterBar) {
-          filterBar.innerHTML = filterBtns.map(b => {
-            const active = String(uiState.selectedSetFilter) === b.key;
-            return `
-              <button type="button" data-set-filter="${b.key}"
-                class="px-3 py-1 rounded-lg text-xs font-bold transition-colors ${active ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-600 dark:text-slate-400'}">
-                ${escapeHtml(b.label)}
-              </button>
-            `;
-          }).join('');
-        }
-
-        // Momentum SVG
-        const momSvg = document.getElementById('momentumSvg');
-        if (momSvg) {
-          momSvg.innerHTML = buildMomentumSvgMarkup(match, uiState.selectedSetFilter, { forPrint: false });
-          momSvg.querySelectorAll('[data-note-pin]').forEach(pin => {
-            pin.addEventListener('click', () => {
-              const nid = pin.getAttribute('data-note-pin');
-              const found = (match.notes || []).find(n => n.id === nid);
-              const prev = document.getElementById('selectedNotePreview');
-              if (found && prev) {
-                prev.textContent = `${found.id} (Pkt. #${found.pointIndex}, ${found.scoreContext}): ${found.text}`;
-                prev.classList.remove('hidden');
-              }
-            });
-          });
-        }
-
-        const st = computeMatchStatistics(match, uiState.selectedSetFilter);
-
-        // Performance Spiderweb & Rating-Karten
-        const radarSvg = document.getElementById('performanceRadarSvg');
-        if (radarSvg) {
-          radarSvg.innerHTML = buildPerformanceRadarSvgMarkup(match, st.performanceRating, { forPrint: false });
-        }
-        const legendEl = document.getElementById('radarLegendBadge');
-        if (legendEl) {
-          legendEl.innerHTML = `
-            <span class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>${escapeHtml(match.players[0])}</span>
-            <span class="flex items-center gap-1.5 text-blue-700 dark:text-blue-400"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>${escapeHtml(match.players[1])}</span>
-          `;
-        }
-        const ratingCards = document.getElementById('performanceRatingCards');
-        if (ratingCards) {
-          const dims = [
-            { key: 'overall', label: 'Gesamt-Performance' },
-            { key: 'serve', label: 'Aufschlag' },
-            { key: 'forehand', label: 'Vorhand' },
-            { key: 'backhand', label: 'Rückhand' },
-            { key: 'net', label: 'Netzspiel' }
-          ];
-          ratingCards.innerHTML = dims.map(d => {
-            const r0 = st.performanceRating[0][d.key];
-            const r1 = st.performanceRating[1][d.key];
-            return `
-              <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 space-y-1">
-                <div class="flex items-center justify-between text-xs">
-                  <span class="font-extrabold text-emerald-700 dark:text-emerald-400">${r0.toFixed(1)} / 10</span>
-                  <span class="font-bold text-slate-700 dark:text-slate-300">${escapeHtml(d.label)}</span>
-                  <span class="font-extrabold text-blue-700 dark:text-blue-400">${r1.toFixed(1)} / 10</span>
-                </div>
-                <div class="grid grid-cols-2 gap-1.5">
-                  <div class="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 flex justify-end overflow-hidden">
-                    <div class="h-full bg-emerald-500 rounded-full" style="width: ${(r0 / 10) * 100}%"></div>
-                  </div>
-                  <div class="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 flex justify-start overflow-hidden">
-                    <div class="h-full bg-blue-500 rounded-full" style="width: ${(r1 / 10) * 100}%"></div>
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('') + `<p class="text-[11px] text-slate-500 dark:text-slate-400">VH/RH/Netz: Basis 5,0 (+2,0 Winner / −1,0 UE / −0,5 FE je Schlagvolumen)</p>`;
-        }
-
-        renderKeyStatsCards(match, st);
-        renderShotTreeView(match, st);
-        renderAnalyseSideLists(match, uiState.selectedSetFilter);
-      }
-
-      function renderAllViews() {
-        renderStartView();
-        renderLiveView();
-        if (uiState.activeTab === 'analyse') renderAnalyseView();
       }
 
       function pctText(part, whole) {
@@ -2825,374 +2655,105 @@
         }
       }
 
-      // =========================================================================
-      // 11. PDF-REPORT-GENERATOR (MOMENTUM-GRAFIK + KENNZAHLEN + INLINE-NOTIZEN)
-      // =========================================================================
-      function buildPrintReportHtml(match, setFilter) {
-        const st = computeMatchStatistics(match, setFilter);
-        const pts = getFilteredPoints(match, setFilter);
-        const notes = (match.notes || []).filter(n =>
-          setFilter === 'all' ? true : Number(n.setNumber) === Number(setFilter)
-        );
-        const setsStr = (match.state.sets || []).map(s => `${s[0]}:${s[1]}`).join(' • ') || 'Laufendes Match';
-        const durationStr = formatDurationText(getMatchDurationSeconds(match));
-        const filterLabel = setFilter === 'all' ? 'Gesamtmatch' : `Satz ${setFilter}`;
-        let winnerText = `Laufend (Satz ${match.state.currentSet})`;
-        if (match.state.completed) {
-          if (match.winnerIndex !== null) {
-            winnerText = match.endedByTime
-              ? `Sieger nach Zeitlimit (60 Min.): ${match.players[match.winnerIndex]}`
-              : `Sieger: ${match.players[match.winnerIndex]}`;
-          } else if (match.endedByTime) {
-            winnerText = 'Unentschieden nach Zeitlimit (60 Min.)';
-          }
+      function renderAnalyseView() {
+        const match = getActiveMatch();
+        if (!match) return;
+
+        document.getElementById('analyseTitle').textContent = `${match.players[0]} vs. ${match.players[1]}`;
+        const setsStr = (match.state.sets || []).map(s => `${s[0]}:${s[1]}`).join(' • ') || 'Laufend';
+        document.getElementById('analyseMeta').textContent =
+          `${match.tournament} • ${match.surface} • ${formatDateDe(match.date)} • Stand: ${setsStr} • Dauer: ${formatDurationText(getMatchDurationSeconds(match))}`;
+
+        const maxSet = Math.max(match.state.currentSet, ...(match.points || []).map(p => p.setNumber || 1));
+        const filterBtns = [{ key: 'all', label: 'Gesamt' }];
+        for (let s = 1; s <= maxSet; s++) {
+          filterBtns.push({ key: String(s), label: `Satz ${s}` });
         }
-
-        const momentumInnerSvg = buildMomentumSvgMarkup(match, setFilter, { forPrint: true });
-
-        const treeRowsHtml = SHOT_TREE_SPEC.map(group => {
-          const totals = group.children.reduce((acc, ch) => {
-            const vals = st.shotBreakdown[group.id][ch.key] || [0, 0];
-            acc[0] += vals[0];
-            acc[1] += vals[1];
-            return acc;
-          }, [0, 0]);
-
-          const subRows = group.children.map(ch => {
-            const vals = st.shotBreakdown[group.id][ch.key] || [0, 0];
+        const filterBar = document.getElementById('setFilterBar');
+        if (filterBar) {
+          filterBar.innerHTML = filterBtns.map(b => {
+            const active = String(uiState.selectedSetFilter) === b.key;
             return `
-              <tr>
-                <td style="padding-left: 16pt; color: #334155;">${escapeHtml(ch.label)}</td>
-                <td style="text-align: right;">${vals[0]}</td>
-                <td style="text-align: right;">${vals[1]}</td>
-              </tr>
+              <button type="button" data-set-filter="${b.key}"
+                class="px-3 py-1 rounded-lg text-xs font-bold transition-colors ${active ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-600 dark:text-slate-400'}">
+                ${escapeHtml(b.label)}
+              </button>
             `;
           }).join('');
+        }
 
-          return `
-            <tr style="background-color: #ecfdf5; font-weight: 700; color: #064e3b;">
-              <td>${escapeHtml(group.label)}</td>
-              <td style="text-align: right;">${totals[0]}</td>
-              <td style="text-align: right;">${totals[1]}</td>
-            </tr>
-            ${subRows}
-          `;
-        }).join('');
-
-        const notesOverviewHtml = notes.length
-          ? notes.map(n => `
-            <li style="margin-bottom: 4pt;">
-              <strong style="color: #047857;">[${escapeHtml(n.id)} • Pkt. #${n.pointIndex} • ${escapeHtml(n.scoreContext)}]:</strong>
-              ${escapeHtml(n.text)}
-            </li>
-          `).join('')
-          : '<li>Keine Coaching-Notizen vorhanden.</li>';
-
-        const notesByPoint = new Map();
-        notes.forEach(n => {
-          const arr = notesByPoint.get(n.pointIndex) || [];
-          arr.push(n);
-          notesByPoint.set(n.pointIndex, arr);
-        });
-
-        const pbpCombinedRows = [];
-        if (pts.length) {
-          (notesByPoint.get(0) || []).forEach(n => {
-            pbpCombinedRows.push(`
-              <tr class="pbp-note-row" style="background-color: #fef3c7; color: #78350f;">
-                <td colspan="7" style="border-left: 3pt solid #d97706; padding: 5pt 8pt; font-size: 9pt;">
-                  <strong>[Notiz ${escapeHtml(n.id)} • vor Spielbeginn • ${escapeHtml(n.scoreContext)}]:</strong> ${escapeHtml(n.text)}
-                </td>
-              </tr>
-            `);
-          });
-
-          pts.forEach(p => {
-            const catLabel = p.category === 'double_fault'
-              ? 'Doppelfehler'
-              : `${p.category.toUpperCase()} • ${p.shot}`;
-            const bbTag = p.isBreakPoint ? ' [BB]' : '';
-
-            pbpCombinedRows.push(`
-              <tr>
-                <td style="text-align: center;">#${p.index}</td>
-                <td style="text-align: center;">${p.setNumber}</td>
-                <td style="text-align: center;">${escapeHtml(p.gamesBefore)}</td>
-                <td style="text-align: center;">${escapeHtml(p.scoreBefore)}</td>
-                <td>${escapeHtml(match.players[p.winner])}</td>
-                <td>${escapeHtml(catLabel)}${bbTag}</td>
-                <td style="text-align: center;">${escapeHtml(p.rallyLength)}</td>
-              </tr>
-            `);
-
-            (notesByPoint.get(p.index) || []).forEach(n => {
-              pbpCombinedRows.push(`
-                <tr class="pbp-note-row" style="background-color: #fef3c7; color: #78350f;">
-                  <td colspan="7" style="border-left: 3pt solid #d97706; padding: 5pt 8pt; font-size: 9pt;">
-                    <strong>[Notiz ${escapeHtml(n.id)} • nach Pkt. #${p.index} • ${escapeHtml(n.scoreContext)}]:</strong> ${escapeHtml(n.text)}
-                  </td>
-                </tr>
-              `);
+        const momSvg = document.getElementById('momentumSvg');
+        if (momSvg) {
+          momSvg.innerHTML = buildMomentumSvgMarkup(match, uiState.selectedSetFilter, { forPrint: false });
+          momSvg.querySelectorAll('[data-note-pin]').forEach(pin => {
+            pin.addEventListener('click', () => {
+              const nid = pin.getAttribute('data-note-pin');
+              const found = (match.notes || []).find(n => n.id === nid);
+              const prev = document.getElementById('selectedNotePreview');
+              if (found && prev) {
+                prev.textContent = `${found.id} (Pkt. #${found.pointIndex}, ${found.scoreContext}): ${found.text}`;
+                prev.classList.remove('hidden');
+              }
             });
           });
-        } else {
-          pbpCombinedRows.push('<tr><td colspan="7" style="text-align: center;">Keine Punkte erfasst.</td></tr>');
         }
 
-        return `
-          <div style="font-family: 'Inter', 'Segoe UI', Arial, sans-serif; color: #0f172a; background: #ffffff;">
-            <div class="print-section" style="border-bottom: 2px solid #047857; padding-bottom: 8pt; margin-bottom: 12pt;">
-              <div style="font-size: 9pt; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.05em;">
-                CourtPulse Pro • Offizieller Match-Analysebericht (${escapeHtml(filterLabel)})
-              </div>
-              <h1 style="font-size: 18pt; font-weight: 800; margin: 2pt 0 4pt 0; color: #0f172a;">
-                ${escapeHtml(match.players[0])} vs. ${escapeHtml(match.players[1])}
-              </h1>
-              <div style="font-size: 9.5pt; color: #334155;">
-                <strong>Turnier:</strong> ${escapeHtml(match.tournament)} &nbsp;|&nbsp;
-                <strong>Datum:</strong> ${escapeHtml(formatDateDe(match.date))} &nbsp;|&nbsp;
-                <strong>Belag:</strong> ${escapeHtml(match.surface)} &nbsp;|&nbsp;
-                <strong>Dauer:</strong> ${escapeHtml(durationStr)} &nbsp;|&nbsp;
-                <strong>Format:</strong> ${escapeHtml(formatLabelName(match.format))}
-              </div>
-              <div style="margin-top: 6pt; padding: 6pt 10pt; background: #f8fafc; border: 1px solid #cbd5e1; border-left: 3pt solid #047857; font-size: 10pt;">
-                <strong>Endergebnis:</strong> ${escapeHtml(setsStr)} (${escapeHtml(winnerText)}) •
-                <strong>Matchdauer:</strong> ${escapeHtml(durationStr)} •
-                <strong>Gesamtpunkte:</strong> ${st.totalPoints[0]} : ${st.totalPoints[1]}
-              </div>
-            </div>
+        const st = computeMatchStatistics(match, uiState.selectedSetFilter);
 
-            <div class="print-section">
-              <h2 style="font-size: 12pt; font-weight: 700; margin: 0 0 6pt 0; border-left: 3pt solid #047857; padding-left: 6pt;">
-                1. Momentum-Verlauf (Punkte-Differenz &amp; Notiz-Markierungen)
-              </h2>
-              <div style="border: 1px solid #cbd5e1; padding: 6pt 8pt; background: #ffffff;">
-                <svg viewBox="0 0 800 220" style="width: 100%; height: 42mm; display: block;" role="img" aria-label="Momentum-Verlauf">
-                  ${momentumInnerSvg}
-                </svg>
-              </div>
-            </div>
-
-            <div class="print-section">
-              <h2 style="font-size: 12pt; font-weight: 700; margin: 0 0 6pt 0; border-left: 3pt solid #047857; padding-left: 6pt;">
-                1B. Performance-Rating (Skala 1 – 10)
-              </h2>
-              <div style="display: flex; align-items: center; gap: 12pt; border: 1px solid #cbd5e1; padding: 6pt 8pt; background: #ffffff;">
-                <svg viewBox="0 0 420 350" style="width: 58mm; height: 48mm; display: block; flex-shrink: 0;" role="img" aria-label="Performance Spiderweb">
-                  ${buildPerformanceRadarSvgMarkup(match, st.performanceRating, { forPrint: true })}
-                </svg>
-                <table style="flex: 1;">
-                  <thead>
-                    <tr>
-                      <th style="text-align: left;">Kategorie (1–10)</th>
-                      <th style="text-align: right;">${escapeHtml(match.players[0])}</th>
-                      <th style="text-align: right;">${escapeHtml(match.players[1])}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr style="background-color: #ecfdf5; font-weight: 700;">
-                      <td>Gesamt-Performance</td>
-                      <td style="text-align: right;">${st.performanceRating[0].overall.toFixed(1)} / 10</td>
-                      <td style="text-align: right;">${st.performanceRating[1].overall.toFixed(1)} / 10</td>
-                    </tr>
-                    <tr>
-                      <td>Aufschlag</td>
-                      <td style="text-align: right;">${st.performanceRating[0].serve.toFixed(1)} / 10</td>
-                      <td style="text-align: right;">${st.performanceRating[1].serve.toFixed(1)} / 10</td>
-                    </tr>
-                    <tr>
-                      <td>Vorhand</td>
-                      <td style="text-align: right;">${st.performanceRating[0].forehand.toFixed(1)} / 10</td>
-                      <td style="text-align: right;">${st.performanceRating[1].forehand.toFixed(1)} / 10</td>
-                    </tr>
-                    <tr>
-                      <td>Rückhand</td>
-                      <td style="text-align: right;">${st.performanceRating[0].backhand.toFixed(1)} / 10</td>
-                      <td style="text-align: right;">${st.performanceRating[1].backhand.toFixed(1)} / 10</td>
-                    </tr>
-                    <tr>
-                      <td>Netzspiel</td>
-                      <td style="text-align: right;">${st.performanceRating[0].net.toFixed(1)} / 10</td>
-                      <td style="text-align: right;">${st.performanceRating[1].net.toFixed(1)} / 10</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div class="print-section">
-              <h2 style="font-size: 12pt; font-weight: 700; margin: 0 0 6pt 0; border-left: 3pt solid #047857; padding-left: 6pt;">
-                2. Match-Kennzahlen &amp; Rallye-Längen
-              </h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th style="width: 50%; text-align: left;">Kennzahl</th>
-                    <th style="width: 25%; text-align: right;">${escapeHtml(match.players[0])}</th>
-                    <th style="width: 25%; text-align: right;">${escapeHtml(match.players[1])}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Punkte gewonnen Gesamt</td>
-                    <td style="text-align: right;">${st.totalPoints[0]}</td>
-                    <td style="text-align: right;">${st.totalPoints[1]}</td>
-                  </tr>
-                  <tr>
-                    <td>1. Aufschlag im Feld %</td>
-                    <td style="text-align: right;">${pctText(st.firstServeIn[0], st.firstServeTotal[0])} (${st.firstServeIn[0]}/${st.firstServeTotal[0]})</td>
-                    <td style="text-align: right;">${pctText(st.firstServeIn[1], st.firstServeTotal[1])} (${st.firstServeIn[1]}/${st.firstServeTotal[1]})</td>
-                  </tr>
-                  <tr>
-                    <td>Punkte gewonnen 1. Aufschlag</td>
-                    <td style="text-align: right;">${pctText(st.firstServeWon[0], st.firstServeIn[0])} (${st.firstServeWon[0]}/${st.firstServeIn[0]})</td>
-                    <td style="text-align: right;">${pctText(st.firstServeWon[1], st.firstServeIn[1])} (${st.firstServeWon[1]}/${st.firstServeIn[1]})</td>
-                  </tr>
-                  <tr>
-                    <td>Punkte gewonnen 2. Aufschlag</td>
-                    <td style="text-align: right;">${pctText(st.secondServeWon[0], st.secondServeTotal[0])} (${st.secondServeWon[0]}/${st.secondServeTotal[0]})</td>
-                    <td style="text-align: right;">${pctText(st.secondServeWon[1], st.secondServeTotal[1])} (${st.secondServeWon[1]}/${st.secondServeTotal[1]})</td>
-                  </tr>
-                  <tr>
-                    <td>Asse / Service Winner</td>
-                    <td style="text-align: right;">${st.aces[0]} / ${st.serviceWinners[0]}</td>
-                    <td style="text-align: right;">${st.aces[1]} / ${st.serviceWinners[1]}</td>
-                  </tr>
-                  <tr>
-                    <td>Doppelfehler</td>
-                    <td style="text-align: right;">${st.doubleFaults[0]}</td>
-                    <td style="text-align: right;">${st.doubleFaults[1]}</td>
-                  </tr>
-                  <tr>
-                    <td>Aggressive Margin (W + gegn. FE − UE)</td>
-                    <td style="text-align: right;">${st.aggressiveMargin[0] >= 0 ? '+' : ''}${st.aggressiveMargin[0]}</td>
-                    <td style="text-align: right;">${st.aggressiveMargin[1] >= 0 ? '+' : ''}${st.aggressiveMargin[1]}</td>
-                  </tr>
-                  <tr>
-                    <td>Breakball-Conversion (Genutzt)</td>
-                    <td style="text-align: right;">${pctText(st.bpConverted[0], st.bpOpportunities[0])} (${st.bpConverted[0]}/${st.bpOpportunities[0]})</td>
-                    <td style="text-align: right;">${pctText(st.bpConverted[1], st.bpOpportunities[1])} (${st.bpConverted[1]}/${st.bpOpportunities[1]})</td>
-                  </tr>
-                  <tr>
-                    <td>Breakball-Saved (Abgewehrt)</td>
-                    <td style="text-align: right;">${pctText(st.bpSaved[0], st.bpFaced[0])} (${st.bpSaved[0]}/${st.bpFaced[0]})</td>
-                    <td style="text-align: right;">${pctText(st.bpSaved[1], st.bpFaced[1])} (${st.bpSaved[1]}/${st.bpFaced[1]})</td>
-                  </tr>
-                  <tr>
-                    <td>Rallyes gewonnen: Kurz (0–4)</td>
-                    <td style="text-align: right;">${st.rallyWon['0-4'][0]}</td>
-                    <td style="text-align: right;">${st.rallyWon['0-4'][1]}</td>
-                  </tr>
-                  <tr>
-                    <td>Rallyes gewonnen: Mittel (5–8)</td>
-                    <td style="text-align: right;">${st.rallyWon['5-8'][0]}</td>
-                    <td style="text-align: right;">${st.rallyWon['5-8'][1]}</td>
-                  </tr>
-                  <tr>
-                    <td>Rallyes gewonnen: Lang (&gt; 9)</td>
-                    <td style="text-align: right;">${st.rallyWon['>9'][0]}</td>
-                    <td style="text-align: right;">${st.rallyWon['>9'][1]}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div class="print-section">
-              <h2 style="font-size: 12pt; font-weight: 700; margin: 0 0 6pt 0; border-left: 3pt solid #047857; padding-left: 6pt;">
-                3. Schlagarten-Analyse (Winner, Unforced Errors &amp; Forced Errors)
-              </h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th style="width: 50%; text-align: left;">Kategorie / Schlagart</th>
-                    <th style="width: 25%; text-align: right;">${escapeHtml(match.players[0])}</th>
-                    <th style="width: 25%; text-align: right;">${escapeHtml(match.players[1])}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${treeRowsHtml}
-                </tbody>
-              </table>
-            </div>
-
-            <div class="print-section">
-              <h2 style="font-size: 12pt; font-weight: 700; margin: 0 0 6pt 0; border-left: 3pt solid #047857; padding-left: 6pt;">
-                4. Seitenwechsel- &amp; Coaching-Notizen (Gesamtübersicht: ${notes.length})
-              </h2>
-              <ul style="margin: 0; padding-left: 16pt; font-size: 9.5pt;">
-                ${notesOverviewHtml}
-              </ul>
-            </div>
-
-            <div class="print-pbp-section">
-              <h2 style="font-size: 12pt; font-weight: 700; margin: 0 0 6pt 0; border-left: 3pt solid #047857; padding-left: 6pt;">
-                5. Punkt-für-Punkt-Protokoll inkl. integrierter Notizen (${pts.length} Punkte)
-              </h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th style="width: 7%; text-align: center;">#</th>
-                    <th style="width: 8%; text-align: center;">Satz</th>
-                    <th style="width: 11%; text-align: center;">Spiele</th>
-                    <th style="width: 12%; text-align: center;">Stand vor</th>
-                    <th style="width: 22%; text-align: left;">Punktsieger</th>
-                    <th style="width: 29%; text-align: left;">Abschluss &amp; Schlag</th>
-                    <th style="width: 11%; text-align: center;">Rallye</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${pbpCombinedRows.join('')}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        `;
-      }
-
-      function generateDirectPdfReport() {
-        try {
-          const match = getActiveMatch();
-          if (!match) {
-            showToast('Kein Match für den PDF-Report ausgewählt.', 'warn');
-            return;
-          }
-
-          const reportHtml = buildPrintReportHtml(match, uiState.selectedSetFilter);
-          const printRoot = document.getElementById('printReportRoot');
-          if (printRoot) {
-            printRoot.innerHTML = reportHtml;
-          }
-
-          const pdfBytes = buildBinaryPdfDocument(match, uiState.selectedSetFilter);
-          const safeName = `${match.players[0]}_vs_${match.players[1]}_${match.date}`.replace(/[^a-zA-Z0-9_-]/g, '_');
-          const fileName = `CourtPulse_Report_${safeName}.pdf`;
-
-          const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = fileName;
-          a.style.display = 'none';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          setTimeout(() => {
-            try { URL.revokeObjectURL(url); } catch (_) {}
-          }, 8000);
-
-          showToast(`PDF-Report "${fileName}" wurde erstellt.`, 'success');
-        } catch (err) {
-          if (typeof window.print === 'function') {
-            window.print();
-          } else {
-            showToast('Fehler beim Erzeugen der PDF-Datei.', 'error');
-          }
+        const radarSvg = document.getElementById('performanceRadarSvg');
+        if (radarSvg) {
+          radarSvg.innerHTML = buildPerformanceRadarSvgMarkup(match, st.performanceRating, { forPrint: false });
         }
+        const legendEl = document.getElementById('radarLegendBadge');
+        if (legendEl) {
+          legendEl.innerHTML = `
+            <span class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>${escapeHtml(match.players[0])}</span>
+            <span class="flex items-center gap-1.5 text-blue-700 dark:text-blue-400"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>${escapeHtml(match.players[1])}</span>
+          `;
+        }
+        const ratingCards = document.getElementById('performanceRatingCards');
+        if (ratingCards) {
+          const dims = [
+            { key: 'overall', label: 'Gesamt-Performance' },
+            { key: 'serve', label: 'Aufschlag' },
+            { key: 'forehand', label: 'Vorhand' },
+            { key: 'backhand', label: 'Rückhand' },
+            { key: 'net', label: 'Netzspiel' }
+          ];
+          ratingCards.innerHTML = dims.map(d => {
+            const r0 = st.performanceRating[0][d.key];
+            const r1 = st.performanceRating[1][d.key];
+            return `
+              <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 space-y-1">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-extrabold text-emerald-700 dark:text-emerald-400">${r0.toFixed(1)} / 10</span>
+                  <span class="font-bold text-slate-700 dark:text-slate-300">${escapeHtml(d.label)}</span>
+                  <span class="font-extrabold text-blue-700 dark:text-blue-400">${r1.toFixed(1)} / 10</span>
+                </div>
+                <div class="grid grid-cols-2 gap-1.5">
+                  <div class="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 flex justify-end overflow-hidden">
+                    <div class="h-full bg-emerald-500 rounded-full" style="width: ${(r0 / 10) * 100}%"></div>
+                  </div>
+                  <div class="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 flex justify-start overflow-hidden">
+                    <div class="h-full bg-blue-500 rounded-full" style="width: ${(r1 / 10) * 100}%"></div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('') + `<p class="text-[11px] text-slate-500 dark:text-slate-400">VH/RH/Netz: Basis 5,0 (+2,0 Winner / −1,0 UE / −0,5 FE je Schlagvolumen)</p>`;
+        }
+
+        renderKeyStatsCards(match, st);
+        renderShotTreeView(match, st);
+        renderAnalyseSideLists(match, uiState.selectedSetFilter);
       }
 
-      // =========================================================================
-      // 11B. PURE-JS BINÄRER PDF-1.4-GENERATOR (OFFLINE, VEKTOR-MOMENTUM, TABELLEN)
-      // =========================================================================
+      function renderAllViews() {
+        renderStartView();
+        renderLiveView();
+        if (uiState.activeTab === 'analyse') renderAnalyseView();
+      }
+
       function encodePdfWinAnsiText(input) {
         const str = String(input ?? '');
         const win1252Map = {
@@ -3418,7 +2979,6 @@
         });
         curY -= 30;
 
-        // 1. VEKTOR-MOMENTUM-GRAFIK
         drawSectionHeader('1. Momentum-Verlauf (Punkte-Differenz & Notiz-Markierungen)');
         const chartBoxH = 118;
         ensureSpace(chartBoxH + 14);
@@ -3519,7 +3079,6 @@
         }
         curY -= (chartBoxH + 10);
 
-        // 1B. PERFORMANCE-RATING SPIDERWEB
         drawSectionHeader('1B. Performance-Rating Spiderweb (Skala 1.0 - 10.0)');
         const radarBoxH = 128;
         ensureSpace(radarBoxH + 10);
@@ -3586,7 +3145,6 @@
         const rTableW = contentW - 205;
         const rCol0 = rTableW * 0.48;
         const rCol1 = rTableW * 0.26;
-        const rCol2 = rTableW * 0.26;
         let rTy = curY - 10;
 
         drawRect(rTableX, rTy, rTableW, 16, [0.06, 0.09, 0.16], [0.80, 0.84, 0.88], 0.4);
@@ -3615,7 +3173,6 @@
         });
         curY -= (radarBoxH + 10);
 
-        // 2. MATCH-KENNZAHLEN TABELLE
         drawSectionHeader('2. Match-Kennzahlen & Rallye-Laengen');
         const statRows = [
           { cells: ['Punkte gewonnen Gesamt', `${st.totalPoints[0]}`, `${st.totalPoints[1]}`] },
@@ -3637,7 +3194,6 @@
           [contentW * 0.50, contentW * 0.25, contentW * 0.25]
         );
 
-        // 3. SCHLAGARTEN-ANALYSE
         drawSectionHeader('3. Schlagarten-Analyse (Winner, Unforced Errors & Forced Errors)');
         const shotRows = [];
         SHOT_TREE_SPEC.forEach(group => {
@@ -3659,7 +3215,6 @@
           [contentW * 0.50, contentW * 0.25, contentW * 0.25]
         );
 
-        // 4. COACHING-NOTIZEN
         drawSectionHeader(`4. Seitenwechsel- & Coaching-Notizen (${notes.length})`);
         if (notes.length > 0) {
           notes.forEach(n => {
@@ -3683,7 +3238,6 @@
           curY -= 18;
         }
 
-        // 5. PUNKT-FÜR-PUNKT-PROTOKOLL
         drawSectionHeader(`5. Punkt-fuer-Punkt-Protokoll (${pts.length} Punkte)`);
         const pbpCols = [
           contentW * 0.07,
@@ -3741,7 +3295,6 @@
           pages.push(ops.join('\n'));
         }
 
-        // PDF-1.4-Byte-Aufbau
         const totalPages = pages.length;
         const objects = [];
         const addObj = (body) => {
@@ -3791,9 +3344,38 @@
         return bytes;
       }
 
-      // =========================================================================
-      // 12. BACKUP EXPORT/IMPORT & EVENT-BINDINGS
-      // =========================================================================
+      function generateDirectPdfReport() {
+        try {
+          const match = getActiveMatch();
+          if (!match) {
+            showToast('Kein Match für den PDF-Report ausgewählt.', 'warn');
+            return;
+          }
+          const pdfBytes = buildBinaryPdfDocument(match, uiState.selectedSetFilter);
+          const safeName = `${match.players[0]}_vs_${match.players[1]}_${match.date}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+          const fileName = `CourtPulse_Report_${safeName}.pdf`;
+          const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => {
+            try { URL.revokeObjectURL(url); } catch (_) {}
+          }, 8000);
+          showToast(`PDF-Report "${fileName}" wurde erstellt.`, 'success');
+        } catch (_) {
+          if (typeof window.print === 'function') {
+            window.print();
+          } else {
+            showToast('Fehler beim Erzeugen der PDF-Datei.', 'error');
+          }
+        }
+      }
+
       function exportBackupJson() {
         try {
           const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
@@ -3819,7 +3401,7 @@
             const parsed = JSON.parse(String(ev.target?.result || ''));
             const list = Array.isArray(parsed?.matches) ? parsed.matches : (parsed?.players ? [parsed] : []);
             if (!list.length) throw new Error('Keine gültigen Matchdaten');
-            const rebuilt = list.map((m, i) => sanitizeAndRebuildMatch(m, i, null));
+            const rebuilt = list.map((m, i) => sanitizeAndRebuildMatch(m, i));
             appData.matches = rebuilt;
             appData.activeMatchId = rebuilt[0].id;
             persistStorage();
@@ -3832,33 +3414,17 @@
         reader.readAsText(file);
       }
 
-      function openLiveShareModal() {
-        const match = getActiveMatch();
-        if (!match || uiState.isSpectator) return;
-        const dbUrl = getConfiguredFirebaseDbUrl();
-
-        // Nutzer, die den Live-Link-Button drücken, sehen keinen Button zum Ändern der Firebase-Daten:
-        document.getElementById('firebaseConfigPanel')?.classList.add('hidden');
-
-        updateLiveShareLinks(match);
-        document.getElementById('liveShareModalBackdrop')?.classList.remove('hidden');
-        document.getElementById('liveShareModalBox')?.classList.remove('hidden');
-
-        if (dbUrl) {
-          pushMatchToLiveCloud(match, true);
-        }
-      }
-
       function bindEvents() {
         document.getElementById('tabStart')?.addEventListener('click', () => switchTab('start'));
         document.getElementById('tabLive')?.addEventListener('click', () => switchTab('live'));
         document.getElementById('tabAnalyse')?.addEventListener('click', () => switchTab('analyse'));
 
+        document.getElementById('backToSpectatorLiveBtn')?.addEventListener('click', () => switchTab('live'));
+
         document.getElementById('dismissSelfHealBtn')?.addEventListener('click', () => {
           document.getElementById('selfHealNotice')?.classList.add('hidden');
         });
 
-        // Neues Match Formular
         document.getElementById('newMatchForm')?.addEventListener('submit', (ev) => {
           ev.preventDefault();
           if (uiState.isSpectator && !ALLOW_SPECTATOR_CREATE_MATCHES) {
@@ -3885,7 +3451,7 @@
             durationStartedAt: Date.now(),
             points: [],
             notes: []
-          }, 0, null);
+          }, 0);
 
           appData.matches.unshift(newMatch);
           appData.activeMatchId = newMatch.id;
@@ -3899,7 +3465,6 @@
           showToast(`Match gestartet: ${p0} vs. ${p1}`, 'success');
         });
 
-        // Demo-Match erzeugen
         document.getElementById('createDemoMatchBtn')?.addEventListener('click', () => {
           if (uiState.isSpectator && !ALLOW_SPECTATOR_CREATE_MATCHES) {
             showToast('Livescore-Empfänger können keine eigenen Matches erstellen.', 'warn');
@@ -3916,7 +3481,6 @@
           showToast('Demo-Match geladen.', 'success');
         });
 
-        // Match-Archiv Aktionen
         document.getElementById('matchArchiveList')?.addEventListener('click', (ev) => {
           const btn = ev.target.closest('button[data-action]');
           if (!btn) return;
@@ -3950,7 +3514,6 @@
           }
         });
 
-        // JSON Export / Import
         document.getElementById('exportJsonBtn')?.addEventListener('click', exportBackupJson);
         document.getElementById('importJsonInput')?.addEventListener('change', (ev) => {
           const file = ev.target.files?.[0];
@@ -3958,7 +3521,6 @@
           ev.target.value = '';
         });
 
-        // Live-Steuerung
         document.getElementById('serveFaultBtn')?.addEventListener('click', handleServeFaultOrDoubleFault);
         document.getElementById('aceBtn')?.addEventListener('click', () => handleDirectServeWinner('ace'));
         document.getElementById('serviceWinnerBtn')?.addEventListener('click', () => handleDirectServeWinner('service_winner'));
@@ -3974,7 +3536,6 @@
         document.getElementById('timerResetBtn')?.addEventListener('click', resetMatchTimer);
         document.getElementById('finishByTimeBtn')?.addEventListener('click', finishMatchByTimeLimit);
 
-        // Bottom Sheet Events
         document.getElementById('closeSheetBtn')?.addEventListener('click', closePointBottomSheet);
         document.getElementById('bottomSheetBackdrop')?.addEventListener('click', closePointBottomSheet);
         document.getElementById('skipRallyBtn')?.addEventListener('click', () => {
@@ -4000,96 +3561,46 @@
           });
         });
 
-        // Notiz Modal Events
         document.getElementById('cancelNoteBtn')?.addEventListener('click', closeNoteModal);
         document.getElementById('noteModalBackdrop')?.addEventListener('click', closeNoteModal);
         document.getElementById('saveNoteBtn')?.addEventListener('click', saveNoteFromModal);
 
-        // Live-Link Modal & Zuschauer Events
         document.getElementById('shareLiveLinkBtn')?.addEventListener('click', openLiveShareModal);
         document.getElementById('closeLiveShareBtn')?.addEventListener('click', closeLiveShareModal);
         document.getElementById('liveShareModalBackdrop')?.addEventListener('click', closeLiveShareModal);
 
-        document.getElementById('backToSpectatorLiveBtn')?.addEventListener('click', () => switchTab('live'));
-
         document.getElementById('copyLiveUrlBtn')?.addEventListener('click', async () => {
-          const url = document.getElementById('liveShareUrlInput')?.value || '';
-          const ok = await copyTextReliable(url);
-          showToast(ok ? 'Live-Link in Zwischenablage kopiert!' : 'Bitte Link manuell markieren & kopieren.', ok ? 'success' : 'warn');
+          const inp = document.getElementById('liveShareUrlInput');
+          if (!inp) return;
+          inp.focus();
+          inp.select();
+          const ok = await copyTextReliable(inp.value);
+          showToast(ok ? 'Live-Link in die Zwischenablage kopiert!' : 'Link markiert – bitte mit Kopieren sichern.', ok ? 'success' : 'info');
         });
 
         document.getElementById('nativeShareLiveBtn')?.addEventListener('click', async () => {
           const match = getActiveMatch();
-          const url = document.getElementById('liveShareUrlInput')?.value || '';
-          if (navigator.share && /^https?:\/\//i.test(url)) {
+          const inp = document.getElementById('liveShareUrlInput');
+          if (!match || !inp) return;
+          const url = inp.value;
+          const shareText = `Live-Score: ${match.players[0]} vs. ${match.players[1]} – Verfolge das Match live:\n${url}`;
+          if (navigator.share) {
             try {
-              await navigator.share({
-                title: `CourtPulse Live: ${match ? `${match.players[0]} vs. ${match.players[1]}` : 'Tennis Match'}`,
-                text: 'Verfolge das Tennis-Match live im Browser:',
-                url
-              });
+              await navigator.share({ title: `${match.players[0]} vs. ${match.players[1]} (Live)`, text: shareText, url });
+              showToast('Live-Link geteilt!', 'success');
               return;
-            } catch (_) {}
+            } catch (err) {
+              if (err && err.name === 'AbortError') return;
+            }
           }
           const ok = await copyTextReliable(url);
-          showToast(ok ? 'Live-Link kopiert! Jetzt in WhatsApp/Chat einfügen.' : 'Bitte Link oben kopieren.', ok ? 'success' : 'warn');
-        });
-
-        document.getElementById('testLiveSyncBtn')?.addEventListener('click', async () => {
-          const rawVal = document.getElementById('firebaseDbUrlInput')?.value || '';
-          const norm = normalizeFirebaseDbUrl(rawVal);
-          if (!norm) {
-            showToast('Bitte eine gültige https://... Firebase URL eingeben.', 'error');
-            return;
-          }
-          try {
-            localStorage.setItem(FIREBASE_DB_KEY, norm);
-          } catch (_) {}
-          const match = getActiveMatch();
-          if (match) {
-            updateLiveShareLinks(match);
-            await pushMatchToLiveCloud(match, false);
-          }
-        });
-
-        document.getElementById('saveFirebaseConfigBtn')?.addEventListener('click', async () => {
-          const rawVal = document.getElementById('firebaseDbUrlInput')?.value || '';
-          const norm = normalizeFirebaseDbUrl(rawVal);
-          if (!norm) {
-            showToast('Bitte eine gültige https://... Firebase URL eingeben.', 'error');
-            return;
-          }
-          try {
-            localStorage.setItem(FIREBASE_DB_KEY, norm);
-          } catch (_) {}
-          const match = getActiveMatch();
-          if (match) {
-            updateLiveShareLinks(match);
-            await pushMatchToLiveCloud(match, false);
-          }
-          document.getElementById('firebaseConfigPanel')?.classList.add('hidden');
+          showToast(ok ? 'Live-Link in die Zwischenablage kopiert!' : 'Bitte Link aus dem Feld kopieren.', ok ? 'success' : 'info');
         });
 
         document.getElementById('spectatorManualRefreshBtn')?.addEventListener('click', () => {
           fetchSpectatorMatchSnapshot(true);
         });
 
-        document.getElementById('exitSpectatorBtn')?.addEventListener('click', () => {
-          if (uiState.spectatorPollId) clearInterval(uiState.spectatorPollId);
-          uiState.isSpectator = false;
-          uiState.spectatorMatchId = null;
-          uiState.spectatorDbUrl = '';
-          try {
-            const cleanUrl = window.location.href.split('?')[0];
-            window.history.replaceState({}, document.title, cleanUrl);
-          } catch (_) {}
-          loadAndHealStorage();
-          renderAllViews();
-          switchTab('start');
-          showToast('Zuschauer-Modus beendet.', 'info');
-        });
-
-        // Analyse Satzfilter & Tree-View
         document.getElementById('setFilterBar')?.addEventListener('click', (ev) => {
           const btn = ev.target.closest('button[data-set-filter]');
           if (!btn) return;
@@ -4107,35 +3618,40 @@
         });
 
         document.getElementById('toggleAllTreeBtn')?.addEventListener('click', () => {
-          const anyClosed = Object.values(uiState.expandedTreeNodes).some(v => !v);
+          const anyOpen = SHOT_TREE_SPEC.some(g => uiState.expandedTreeNodes[g.id]);
           SHOT_TREE_SPEC.forEach(g => {
-            uiState.expandedTreeNodes[g.id] = anyClosed;
+            uiState.expandedTreeNodes[g.id] = !anyOpen;
           });
           renderAnalyseView();
         });
 
         document.getElementById('directPdfBtn')?.addEventListener('click', generateDirectPdfReport);
+
+        document.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Escape') {
+            closePointBottomSheet();
+            closeNoteModal();
+            closeLiveShareModal();
+          }
+        });
       }
 
-      // =========================================================================
-      // 13. INITIALISIERUNG
-      // =========================================================================
       function bootstrap() {
         installGlobalErrorGuards();
         initTheme();
         setupPwaManifestAndWorker();
-        const isSpec = initSharedLinkSpectatorCheck();
-        if (!isSpec) {
-          loadAndHealStorage();
-        }
         bindEvents();
+
+        const startedAsSpectator = initSharedLinkSpectatorCheck();
+        if (!startedAsSpectator) {
+          loadAndHealStorage();
+          switchTab('start');
+        } else {
+          switchTab('live');
+        }
+
         renderAllViews();
         startTimerTicker();
-        if (isSpec) {
-          switchTab('live');
-        } else {
-          switchTab('start');
-        }
       }
 
       if (document.readyState === 'loading') {
