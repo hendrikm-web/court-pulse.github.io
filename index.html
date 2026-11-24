@@ -23,6 +23,9 @@
       }
     };
   </script>
+  <!-- Firebase App & Auth Compat SDK für E-Mail/Passwort & Google Sign-In -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <style>
     :root {
       color-scheme: light dark;
@@ -82,7 +85,11 @@
       #noteModalBackdrop,
       #noteModalBox,
       #liveShareModalBackdrop,
-      #liveShareModalBox {
+      #liveShareModalBox,
+      #authModalBackdrop,
+      #authModalBox,
+      #playerModalBackdrop,
+      #playerModalBox {
         display: none !important;
       }
 
@@ -93,39 +100,6 @@
         overflow: visible !important;
         background: #ffffff !important;
         color: #0f172a !important;
-      }
-
-      .print-section {
-        break-inside: avoid;
-        page-break-inside: avoid;
-        margin-bottom: 12pt;
-      }
-
-      .print-pbp-section {
-        break-inside: auto;
-        page-break-inside: auto;
-      }
-
-      table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-        page-break-inside: auto;
-      }
-
-      thead {
-        display: table-header-group !important;
-      }
-
-      tr {
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-      }
-
-      th, td {
-        border: 1px solid #cbd5e1 !important;
-        padding: 4pt 6pt !important;
-        text-align: left !important;
-        vertical-align: top !important;
       }
     }
   </style>
@@ -150,8 +124,8 @@
           </div>
         </div>
 
-        <!-- Tabs (Start, Live, Analyse) & Light/Dark Toggle -->
-        <div class="flex items-center gap-1.5 sm:gap-2">
+        <!-- Tabs (Start, Live, Analyse), Account-Button & Light/Dark Toggle -->
+        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <nav class="flex items-center bg-slate-200/80 dark:bg-slate-900 p-1 rounded-xl border border-slate-300/60 dark:border-slate-800" role="tablist" aria-label="Hauptnavigation">
             <button id="tabStart" type="button" role="tab" aria-selected="true"
               class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-sm">
@@ -166,6 +140,13 @@
               Analyse
             </button>
           </nav>
+
+          <!-- Tracker-Konto Button (nur für aktive Nutzer, im Zuschauer-Modus ausgeblendet) -->
+          <button id="headerAccountBtn" type="button"
+            class="px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shadow-sm flex items-center gap-2 text-xs font-semibold">
+            <span id="headerAccountDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+            <span id="headerAccountLabel" class="max-w-[120px] truncate">Anmelden</span>
+          </button>
 
           <!-- Light / Dark Mode Toggle -->
           <button id="themeToggleBtn" type="button" aria-label="Farbschema wechseln" title="Light / Dark Mode umschalten"
@@ -188,13 +169,51 @@
       <button id="dismissSelfHealBtn" type="button" class="text-xs font-bold underline shrink-0">OK</button>
     </div>
 
-    <!-- ANSICHT 1: START & ARCHIV -->
+    <!-- ANSICHT 1: START, SPIELERPROFILE & MATCH-HISTORIE -->
     <main id="viewStart" class="space-y-6">
+      <!-- CLOUD-KONTO STATUSLEISTE -->
+      <section id="accountStatusCard" class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 p-4 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div id="accountAvatarCircle" class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-extrabold text-sm text-slate-700 dark:text-slate-300 shrink-0">
+              CP
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 id="accountDisplayName" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Lokaler Gast-Modus</h2>
+                <span id="cloudSyncBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                  Nur lokal gespeichert
+                </span>
+              </div>
+              <p id="accountSubInfo" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Melde dich an, um deine Match-Historie und Spielerprofile geräteübergreifend in der Cloud zu sichern.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <button id="syncCloudNowBtn" type="button"
+              class="hidden px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
+              ↻ Cloud-Sync
+            </button>
+            <button id="openAuthModalBtn" type="button"
+              class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm">
+              Anmelden / Konto erstellen
+            </button>
+            <button id="logoutUserBtn" type="button"
+              class="hidden px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+              Abmelden
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- NEUES MATCH STARTEN -->
       <section id="newMatchCardSection" class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 p-4 sm:p-6 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-5">
           <div>
             <h1 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Neues Match starten</h1>
-            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Spieler auswählen oder eingeben, Format festlegen und direkt ins Live-Tracking starten.</p>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Spieler aus Profilen wählen oder frei eingeben, Format festlegen und direkt ins Live-Tracking starten.</p>
           </div>
           <button id="createDemoMatchBtn" type="button"
             class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-800 dark:text-emerald-300 border border-emerald-500/35 transition-colors flex items-center gap-1.5">
@@ -207,21 +226,33 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label for="player0Input" class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
-                Spieler 1 (Grün)
-              </label>
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="player0Input" class="block text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">
+                  Spieler 1 (Blau)
+                </label>
+                <select id="player0ProfilePicker" aria-label="Profil für Spieler 1 wählen"
+                  class="text-[11px] rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-slate-700 dark:text-slate-300">
+                  <option value="">Profil wählen…</option>
+                </select>
+              </div>
               <input id="player0Input" name="player0" type="text" list="knownPlayersList" required autocomplete="off"
                 placeholder="z. B. Moritz"
-                class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3.5 py-2.5 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3.5 py-2.5 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
 
             <div>
-              <label for="player1Input" class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
-                Spieler 2 (Blau)
-              </label>
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="player1Input" class="block text-xs font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400">
+                  Spieler 2 (Orange)
+                </label>
+                <select id="player1ProfilePicker" aria-label="Profil für Spieler 2 wählen"
+                  class="text-[11px] rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-slate-700 dark:text-slate-300">
+                  <option value="">Profil wählen…</option>
+                </select>
+              </div>
               <input id="player1Input" name="player1" type="text" list="knownPlayersList" required autocomplete="off"
                 placeholder="z. B. Felix Meinen"
-                class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3.5 py-2.5 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3.5 py-2.5 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500" />
             </div>
           </div>
 
@@ -281,15 +312,35 @@
         </form>
       </section>
 
-      <!-- Match-Archiv & JSON Backup Export / Import -->
+      <!-- SPIELERPROFILE & SAISON-ENTWICKLUNG -->
+      <section id="playerProfilesSection" class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 p-4 sm:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Spielerprofile &amp; Langzeit-Bilanz</h2>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Stammdaten pflegen und automatische Gesamtstatistiken über alle gespeicherten Matches einsehen.</p>
+          </div>
+          <button id="openNewPlayerBtn" type="button"
+            class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-sm shrink-0">
+            + Spielerprofil anlegen
+          </button>
+        </div>
+
+        <div id="playerProfilesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
+      </section>
+
+      <!-- Match-Historie & JSON Backup Export / Import -->
       <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 p-4 sm:p-6 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
-            <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Match-Archiv &amp; Backup</h2>
-            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Matches laden, analysieren oder als CourtPulse JSON-Backup sichern und importieren.</p>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Match-Historie &amp; Backup</h2>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Matches laden, analysieren, nach Spieler filtern oder als JSON sichern.</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
+            <select id="archivePlayerFilter" aria-label="Match-Historie nach Spieler filtern"
+              class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
+              <option value="all">Alle Spieler</option>
+            </select>
             <button id="exportJsonBtn" type="button"
               class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition-colors">
               JSON Export
@@ -305,7 +356,7 @@
         <div id="matchArchiveList" class="space-y-3"></div>
       </section>
 
-      <!-- Hinweis für Livescore-Empfänger (keine eigene Match-Erstellung möglich) -->
+      <!-- Hinweis für Livescore-Empfänger -->
       <section id="spectatorLockedNotice" class="hidden rounded-2xl bg-emerald-500/10 border border-emerald-500/40 p-4 sm:p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -324,184 +375,196 @@
 
     <!-- ANSICHT 2: LIVE-TRACKER -->
     <main id="viewLive" class="hidden space-y-4">
-      <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm">
-        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-200 dark:border-slate-800">
+      <!-- BEREICH A: SCHLICHTE MATCH-INFORMATIONEN -->
+      <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 px-4 py-3 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2 flex-wrap">
-            <span id="liveTournamentBadge" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300">
+            <span id="liveTournamentBadge" class="text-xs font-medium text-slate-700 dark:text-slate-300">
               Match
             </span>
-            <span id="liveModeBadge" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-800 dark:text-emerald-300">
-              1. Aufschlag aktiv
-            </span>
-            <span id="liveSituationBadge" class="hidden text-xs font-extrabold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-900 dark:text-amber-300 border border-amber-500/40">
-              BREAKBALL
-            </span>
-            <span id="liveChangeoverBadge" class="hidden text-xs font-bold px-2.5 py-1 rounded-lg bg-indigo-500/15 text-indigo-800 dark:text-indigo-300 border border-indigo-500/30">
-              Seitenwechsel
-            </span>
-            <span id="liveFormatBadge" class="hidden text-xs font-semibold px-2.5 py-1 rounded-lg bg-purple-500/15 text-purple-800 dark:text-purple-300 border border-purple-500/30">
+            <span id="liveFormatBadge" class="hidden text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
               Champions Cup U10
             </span>
-            <span id="liveDurationBadge" class="text-xs font-mono font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300/80 dark:border-slate-700">
-              Dauer: 00:00
+            <span id="liveSituationBadge" class="hidden text-[11px] font-bold px-2 py-0.5 rounded-md bg-orange-500/15 text-orange-800 dark:text-orange-300 border border-orange-500/30">
+              BREAKBALL
+            </span>
+            <span id="liveChangeoverBadge" class="hidden text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300/70 dark:border-slate-700">
+              Seitenwechsel
             </span>
           </div>
-
-          <div class="flex items-center gap-1.5 flex-wrap">
-            <button id="shareLiveLinkBtn" type="button"
-              class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-800 dark:text-emerald-300 border border-emerald-500/35 transition-colors flex items-center gap-1">
-              <span>📡 Live-Link</span>
-            </button>
-            <button id="undoPointBtn" type="button"
-              class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition-colors">
-              Rückgängig
-            </button>
-            <button id="openNoteModalBtn" type="button"
-              class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-600/15 hover:bg-blue-600/25 text-blue-800 dark:text-blue-300 border border-blue-500/30 transition-colors">
-              + Notiz
-            </button>
-            <button id="finishMatchManualBtn" type="button"
-              class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-600/15 hover:bg-rose-600/25 text-rose-800 dark:text-rose-300 border border-rose-500/30 transition-colors">
-              Match beenden
-            </button>
-          </div>
+          <span id="liveDurationBadge" class="text-xs font-mono text-slate-500 dark:text-slate-400">
+            Dauer: 00:00 Min.
+          </span>
         </div>
 
-        <!-- Zuschauer-Statusleiste (wird nur im Shared-Link Read-Only-Modus eingeblendet) -->
-        <div id="spectatorBanner" class="hidden mb-3 p-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 flex flex-wrap items-center justify-between gap-2">
+        <!-- Zuschauer-Statusleiste -->
+        <div id="spectatorBanner" class="hidden mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="text-xs sm:text-sm font-bold text-emerald-900 dark:text-emerald-200">
-              Live-Zuschauer-Modus (Schreibgeschützt • Automatische Aktualisierung)
+            <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+            <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Live-Zuschauer-Modus (Schreibgeschützt)
             </span>
           </div>
           <div class="flex items-center gap-2">
-            <span id="spectatorLastSync" class="text-[11px] font-mono text-slate-600 dark:text-slate-400">Verbunden...</span>
+            <span id="spectatorLastSync" class="text-[11px] font-mono text-slate-500 dark:text-slate-400">Verbunden...</span>
             <button id="spectatorManualRefreshBtn" type="button"
-              class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500">
+              class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700">
               ↻ Aktualisieren
             </button>
           </div>
         </div>
 
         <!-- 60-Minuten-Match-Timer (Champions Cup U10) -->
-        <div id="matchTimerBar" class="hidden mb-3 p-3 rounded-xl border border-slate-300/80 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-800/60 flex flex-wrap items-center justify-between gap-2">
-          <div class="flex items-center gap-2.5 flex-wrap">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Restzeit (max. 60 Min.):</span>
-            <span id="matchTimerDisplay" class="font-mono font-extrabold text-base sm:text-lg px-2.5 py-0.5 rounded-lg bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 border border-slate-300 dark:border-slate-700">
+        <div id="matchTimerBar" class="hidden mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Restzeit:</span>
+            <span id="matchTimerDisplay" class="font-mono font-bold text-sm px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
               60:00
             </span>
-            <span id="matchTimerWarningTag" class="hidden text-xs font-bold px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-900 dark:text-amber-300 border border-amber-500/40">
-              Unter 5 Minuten!
+            <span id="matchTimerWarningTag" class="hidden text-[11px] font-semibold px-2 py-0.5 rounded-md bg-orange-500/15 text-orange-800 dark:text-orange-300">
+              Unter 5 Min.
             </span>
-            <span id="matchTimerStatusTag" class="hidden text-xs font-bold px-2 py-0.5 rounded-lg bg-rose-500/20 text-rose-800 dark:text-rose-300">
-              Zeit abgelaufen!
+            <span id="matchTimerStatusTag" class="hidden text-[11px] font-semibold px-2 py-0.5 rounded-md bg-orange-500/20 text-orange-900 dark:text-orange-200">
+              Zeit abgelaufen
             </span>
           </div>
           <div class="flex items-center gap-1.5 flex-wrap">
             <button id="timerToggleBtn" type="button"
-              class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-colors">
+              class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
               Start
             </button>
             <button id="timerResetBtn" type="button"
-              class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition-colors">
-              Reset 60:00
+              class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700">
+              Reset
             </button>
             <button id="finishByTimeBtn" type="button"
-              class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white transition-colors">
-              Match nach Zeit beenden
+              class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
+              Nach Zeit beenden
             </button>
           </div>
         </div>
+      </section>
 
-        <!-- Spieler-Zeilen mit Aufschlag-Indikator, Sätzen, Spielen & Punkten -->
+      <!-- BEREICH B: SCOREBOARD (BLAU VS. ORANGE) -->
+      <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 shadow-sm">
+        <div class="flex items-center justify-between mb-2.5 px-1">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Spielstand</span>
+          <span id="liveModeBadge" class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+            1. Aufschlag aktiv
+          </span>
+        </div>
+
         <div class="space-y-2.5">
-          <div id="rowPlayer0" class="flex items-center justify-between gap-2 p-3 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/5 border border-emerald-500/30 dark:border-emerald-500/20">
+          <!-- Spieler 1: Blau -->
+          <div id="rowPlayer0" class="flex items-center justify-between gap-2 p-3 rounded-xl bg-blue-500/10 dark:bg-blue-500/10 border border-blue-500/30 dark:border-blue-500/25">
             <div class="flex items-center gap-2.5 min-w-0">
-              <span id="serveDot0" class="w-3 h-3 rounded-full bg-emerald-500 shrink-0 shadow-sm shadow-emerald-500/60" title="Aufschläger"></span>
+              <span id="serveDot0" class="w-3 h-3 rounded-full bg-blue-600 shrink-0 shadow-sm shadow-blue-600/50" title="Aufschläger"></span>
               <span id="liveName0" class="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">Spieler 1</span>
-              <span id="liveWinnerTag0" class="hidden text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white">SIEGER</span>
+              <span id="liveWinnerTag0" class="hidden text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white">SIEGER</span>
             </div>
             <div class="flex items-center gap-2 sm:gap-3 shrink-0 font-mono">
               <div id="liveSets0" class="flex items-center gap-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400"></div>
               <div id="liveGames0" class="w-7 text-center font-bold text-base sm:text-lg text-slate-800 dark:text-slate-200 bg-slate-200/80 dark:bg-slate-800 rounded-lg py-0.5">0</div>
-              <div id="livePoints0" class="w-11 text-center font-extrabold text-lg sm:text-xl text-emerald-800 dark:text-emerald-400 bg-emerald-500/20 rounded-lg py-0.5">0</div>
+              <div id="livePoints0" class="w-11 text-center font-extrabold text-lg sm:text-xl text-blue-700 dark:text-blue-400 bg-blue-500/20 rounded-lg py-0.5">0</div>
             </div>
           </div>
 
-          <div id="rowPlayer1" class="flex items-center justify-between gap-2 p-3 rounded-xl bg-blue-500/10 dark:bg-blue-500/5 border border-blue-500/30 dark:border-blue-500/20">
+          <!-- Spieler 2: Orange -->
+          <div id="rowPlayer1" class="flex items-center justify-between gap-2 p-3 rounded-xl bg-orange-500/10 dark:bg-orange-500/10 border border-orange-500/30 dark:border-orange-500/25">
             <div class="flex items-center gap-2.5 min-w-0">
-              <span id="serveDot1" class="w-3 h-3 rounded-full bg-blue-500 shrink-0 shadow-sm shadow-blue-500/60" title="Aufschläger"></span>
+              <span id="serveDot1" class="w-3 h-3 rounded-full bg-orange-500 shrink-0 shadow-sm shadow-orange-500/50" title="Aufschläger"></span>
               <span id="liveName1" class="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">Spieler 2</span>
-              <span id="liveWinnerTag1" class="hidden text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white">SIEGER</span>
+              <span id="liveWinnerTag1" class="hidden text-[11px] font-bold px-2 py-0.5 rounded-full bg-orange-600 text-white">SIEGER</span>
             </div>
             <div class="flex items-center gap-2 sm:gap-3 shrink-0 font-mono">
               <div id="liveSets1" class="flex items-center gap-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400"></div>
               <div id="liveGames1" class="w-7 text-center font-bold text-base sm:text-lg text-slate-800 dark:text-slate-200 bg-slate-200/80 dark:bg-slate-800 rounded-lg py-0.5">0</div>
-              <div id="livePoints1" class="w-11 text-center font-extrabold text-lg sm:text-xl text-blue-800 dark:text-blue-400 bg-blue-500/20 rounded-lg py-0.5">0</div>
+              <div id="livePoints1" class="w-11 text-center font-extrabold text-lg sm:text-xl text-orange-700 dark:text-orange-400 bg-orange-500/20 rounded-lg py-0.5">0</div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Aufschlag-Statusmaschine (1-Tap) -->
-      <section id="liveServeSection" class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 p-4 shadow-sm">
+      <!-- BEREICH C: SCHLICHTE MATCH-AKTIONEN -->
+      <section id="liveMatchActionsSection" class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 shadow-sm">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <button id="shareLiveLinkBtn" type="button"
+            class="py-2 px-3 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-center gap-1.5">
+            <span>📡 Live-Link</span>
+          </button>
+          <button id="undoPointBtn" type="button"
+            class="py-2 px-3 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-center gap-1.5">
+            <span>↩ Rückgängig</span>
+          </button>
+          <button id="openNoteModalBtn" type="button"
+            class="py-2 px-3 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-center gap-1.5">
+            <span>+ Notiz</span>
+          </button>
+          <button id="finishMatchManualBtn" type="button"
+            class="py-2 px-3 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-center gap-1.5">
+            <span>Match beenden</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- BEREICH D: AUFSCHLAG-ERFASSUNG (BLAU / ORANGE) -->
+      <section id="liveServeSection" class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 shadow-sm">
         <div class="flex items-center justify-between mb-3">
           <span class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Aufschlag (<span id="activeServerNameBadge" class="text-slate-900 dark:text-white">Aufschläger</span>)
           </span>
-          <span id="serveAttemptLabel" class="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+          <span id="serveAttemptLabel" class="text-xs font-semibold text-slate-600 dark:text-slate-400">
             1. Aufschlag aktiv
           </span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <button id="serveFaultBtn" type="button"
-            class="py-3.5 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] border bg-amber-500/15 hover:bg-amber-500/25 text-amber-900 dark:text-amber-300 border-amber-500/40">
+            class="py-3.5 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] border bg-orange-500/15 hover:bg-orange-500/25 text-orange-800 dark:text-orange-300 border-orange-500/40">
             1. Aufschlag Fehler
           </button>
 
           <button id="aceBtn" type="button"
-            class="py-3.5 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm">
+            class="py-3.5 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] bg-blue-600 hover:bg-blue-500 text-white shadow-sm">
             ⚡ Ass
           </button>
 
           <button id="serviceWinnerBtn" type="button"
-            class="py-3.5 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] bg-teal-600 hover:bg-teal-500 text-white shadow-sm">
+            class="py-3.5 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] bg-blue-700 hover:bg-blue-600 text-white shadow-sm">
             🎾 Service Winner
           </button>
         </div>
       </section>
 
-      <!-- Schnelle Punktvergabe (2-Tap über Bottom Sheet) -->
-      <section id="livePointsSection" class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 p-4 shadow-sm">
+      <!-- BEREICH E: PUNKTGEWINN ERFASSEN (SPIELER 1 BLAU / SPIELER 2 ORANGE) -->
+      <section id="livePointsSection" class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 shadow-sm">
         <div class="flex items-center justify-between mb-3">
           <span class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-            Punktgewinn erfassen (Rallye &amp; Schlagart)
+            Punktgewinn erfassen
           </span>
-          <span id="pointCountBadge" class="text-xs font-mono text-slate-600 dark:text-slate-400">0 Punkte</span>
+          <span id="pointCountBadge" class="text-xs font-mono text-slate-500 dark:text-slate-400">0 Punkte</span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button id="pointWinBtn0" type="button"
-            class="py-5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-extrabold text-base shadow-md shadow-emerald-600/20 transition-all flex flex-col items-center justify-center gap-0.5">
-            <span>Punkt für</span>
+            class="py-5 px-4 rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-extrabold text-base shadow-md shadow-blue-600/20 transition-all flex flex-col items-center justify-center gap-0.5">
+            <span class="text-xs font-semibold uppercase tracking-wider opacity-90">Punkt für</span>
             <span id="btnWinName0" class="text-lg truncate max-w-full">Spieler 1</span>
           </button>
 
           <button id="pointWinBtn1" type="button"
-            class="py-5 px-4 rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-extrabold text-base shadow-md shadow-blue-600/20 transition-all flex flex-col items-center justify-center gap-0.5">
-            <span>Punkt für</span>
+            class="py-5 px-4 rounded-2xl bg-orange-500 hover:bg-orange-400 active:scale-[0.99] text-white font-extrabold text-base shadow-md shadow-orange-500/20 transition-all flex flex-col items-center justify-center gap-0.5">
+            <span class="text-xs font-semibold uppercase tracking-wider opacity-90">Punkt für</span>
             <span id="btnWinName1" class="text-lg truncate max-w-full">Spieler 2</span>
           </button>
         </div>
       </section>
 
-      <!-- Seitenwechsel-Notizen Schnellansicht im Live-Tab -->
-      <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 p-4 shadow-sm">
+      <!-- BEREICH F: SEITENWECHSEL-NOTIZEN -->
+      <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 shadow-sm">
         <div class="flex items-center justify-between mb-2.5">
-          <h2 class="text-sm font-bold text-slate-900 dark:text-white">Seitenwechsel- &amp; Coaching-Notizen</h2>
-          <span id="liveNotesCount" class="text-xs font-semibold text-slate-600 dark:text-slate-400">0 Notizen</span>
+          <h2 class="text-sm font-bold text-slate-900 dark:text-white">Notizen</h2>
+          <span id="liveNotesCount" class="text-xs font-medium text-slate-500 dark:text-slate-400">0 Notizen</span>
         </div>
         <div id="liveNotesList" class="space-y-2 max-h-56 overflow-y-auto pr-1 text-xs sm:text-sm"></div>
       </section>
@@ -600,7 +663,161 @@
     </main>
   </div>
 
-  <!-- KOMPAKTES BOTTOM SHEET FÜR PUNKTVERGABE (2-TAP) -->
+  <!-- MODAL FÜR TRACKER-LOGIN & REGISTRIERUNG (E-MAIL + GOOGLE) -->
+  <div id="authModalBackdrop" class="hidden fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-[2px]"></div>
+  <div id="authModalBox" role="dialog" aria-modal="true" aria-labelledby="authModalTitle"
+    class="hidden fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-md mx-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-5 shadow-2xl space-y-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 id="authModalTitle" class="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">Tracker-Konto &amp; Cloud-Sync</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Matches &amp; Spielerprofile dauerhaft im Konto sichern</p>
+      </div>
+      <button id="closeAuthModalBtn" type="button"
+        class="px-3 py-1 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+        Schließen
+      </button>
+    </div>
+
+    <!-- Hinweis, falls Web-API-Key noch nicht hinterlegt wurde -->
+    <div id="firebaseAuthConfigNotice" class="hidden p-3 rounded-xl bg-amber-500/15 border border-amber-500/40 text-xs text-amber-950 dark:text-amber-200 space-y-1.5">
+      <p class="font-bold">Firebase Web-API-Key erforderlich:</p>
+      <p>Für E-Mail- &amp; Google-Login bitte einmalig den Web-API-Key aus den Firebase-Projekteinstellungen eintragen (wird lokal gespeichert):</p>
+      <div class="flex items-center gap-2 pt-1">
+        <input id="firebaseWebApiKeyInput" type="text" placeholder="AIzaSy..."
+          class="w-full rounded-lg border border-amber-500/40 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white" />
+        <button id="saveFirebaseApiKeyBtn" type="button"
+          class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shrink-0">
+          Aktivieren
+        </button>
+      </div>
+    </div>
+
+    <!-- Google Sign-In Button -->
+    <button id="googleSignInBtn" type="button"
+      class="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 shadow-sm transition-colors">
+      <svg class="w-4 h-4" viewBox="0 0 24 24">
+        <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"/>
+        <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.5H12v4.8h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/>
+        <path fill="#FBBC05" d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"/>
+        <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.9C3.5 21.4 7.4 24 12 24z"/>
+      </svg>
+      <span>Mit Google anmelden</span>
+    </button>
+
+    <div class="relative flex items-center justify-center">
+      <div class="border-t border-slate-200 dark:border-slate-800 w-full"></div>
+      <span class="bg-white dark:bg-slate-900 px-3 text-[11px] uppercase tracking-wider text-slate-400">oder per E-Mail</span>
+      <div class="border-t border-slate-200 dark:border-slate-800 w-full"></div>
+    </div>
+
+    <!-- Umschalter Login / Registrieren -->
+    <div class="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+      <button id="authModeLoginTab" type="button"
+        class="py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-sm">
+        Anmelden
+      </button>
+      <button id="authModeRegisterTab" type="button"
+        class="py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400">
+        Konto erstellen
+      </button>
+    </div>
+
+    <form id="emailAuthForm" class="space-y-3">
+      <div id="authNameFieldWrap" class="hidden">
+        <label for="authDisplayNameInput" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Anzeigename / Coach-Name</label>
+        <input id="authDisplayNameInput" type="text" placeholder="z. B. Trainer Thomas"
+          class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white" />
+      </div>
+      <div>
+        <label for="authEmailInput" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">E-Mail-Adresse</label>
+        <input id="authEmailInput" type="email" required placeholder="name@verein.de"
+          class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white" />
+      </div>
+      <div>
+        <label for="authPasswordInput" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Passwort (min. 6 Zeichen)</label>
+        <input id="authPasswordInput" type="password" required minlength="6" placeholder="••••••••"
+          class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white" />
+      </div>
+      <button id="emailAuthSubmitBtn" type="submit"
+        class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-sm">
+        Anmelden
+      </button>
+    </form>
+  </div>
+
+  <!-- MODAL FÜR SPIELERPROFIL ANLEGEN / BEARBEITEN -->
+  <div id="playerModalBackdrop" class="hidden fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-[2px]"></div>
+  <div id="playerModalBox" role="dialog" aria-modal="true" aria-labelledby="playerModalTitle"
+    class="hidden fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-md mx-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-5 shadow-2xl space-y-4">
+    <div class="flex items-center justify-between">
+      <h3 id="playerModalTitle" class="text-base font-extrabold text-slate-900 dark:text-white">Spielerprofil bearbeiten</h3>
+      <button id="closePlayerModalBtn" type="button"
+        class="px-3 py-1 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+        Schließen
+      </button>
+    </div>
+
+    <form id="playerProfileForm" class="space-y-3">
+      <input id="editPlayerIdInput" type="hidden" />
+      <div>
+        <label for="profileNameInput" class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Spielername *</label>
+        <input id="profileNameInput" type="text" required placeholder="z. B. Moritz"
+          class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="profileHandSelect" class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Schlaghand</label>
+          <select id="profileHandSelect"
+            class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white">
+            <option value="Rechtshänder">Rechtshänder</option>
+            <option value="Linkshänder">Linkshänder</option>
+          </select>
+        </div>
+        <div>
+          <label for="profileBackhandSelect" class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Rückhand</label>
+          <select id="profileBackhandSelect"
+            class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white">
+            <option value="Zweihändig">Zweihändig</option>
+            <option value="Einhändig">Einhändig</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="profileLkInput" class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">LK / Jahrgang</label>
+          <input id="profileLkInput" type="text" placeholder="z. B. LK 14,5 / Jg. 2014"
+            class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white" />
+        </div>
+        <div>
+          <label for="profileStyleSelect" class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Spielstil</label>
+          <select id="profileStyleSelect"
+            class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white">
+            <option value="Allrounder">Allrounder</option>
+            <option value="Aggressiver Grundlinienspieler">Aggressiver Grundlinienspieler</option>
+            <option value="Konterspieler">Konterspieler</option>
+            <option value="Serve & Volley">Serve &amp; Volley</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label for="profileNotesInput" class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Entwicklungsfokus / Notiz</label>
+        <input id="profileNotesInput" type="text" placeholder="z. B. 1. Aufschlag-Quote & Netzangriffe"
+          class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white" />
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" id="cancelPlayerModalBtn"
+          class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          Abbrechen
+        </button>
+        <button type="submit"
+          class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white">
+          Profil speichern
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- KOMPAKTES BOTTOM SHEET FÜR PUNKTVERGABE (2-TAP, BLAU / ORANGE) -->
   <div id="bottomSheetBackdrop" class="hidden fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-[2px]"></div>
   <div id="bottomSheetModal" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"
     class="hidden fixed inset-x-0 bottom-0 z-50 max-w-xl mx-auto rounded-t-3xl bg-white dark:bg-slate-900 border-t border-x border-slate-300 dark:border-slate-800 p-5 shadow-2xl transition-transform">
@@ -608,7 +825,7 @@
 
     <div class="flex items-center justify-between mb-4">
       <div>
-        <p class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Punkt erfassen</p>
+        <p id="sheetKicker" class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Punkt erfassen</p>
         <h3 id="sheetTitle" class="text-lg font-extrabold text-slate-900 dark:text-white">Punkt für Spieler</h3>
       </div>
       <button id="closeSheetBtn" type="button"
@@ -620,13 +837,13 @@
     <div class="mb-4">
       <div class="flex items-center justify-between mb-2">
         <span class="text-xs font-bold text-slate-600 dark:text-slate-400">1. Ballwechsel-Länge</span>
-        <button id="skipRallyBtn" type="button" class="text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline">
+        <button id="skipRallyBtn" type="button" class="text-xs font-bold text-blue-700 dark:text-blue-400 hover:underline">
           Überspringen (0-4)
         </button>
       </div>
       <div class="grid grid-cols-3 gap-2">
         <button type="button" data-rally="0-4"
-          class="rally-opt py-2.5 rounded-xl text-sm font-bold border border-emerald-500 bg-emerald-600 text-white transition-colors">
+          class="rally-opt py-2.5 rounded-xl text-sm font-bold border border-blue-500 bg-blue-600 text-white transition-colors">
           0–4
         </button>
         <button type="button" data-rally="5-8"
@@ -644,7 +861,7 @@
       <span class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">2. Schlagart</span>
       <div class="grid grid-cols-3 gap-2">
         <button type="button" data-shot-type="Vorhand"
-          class="shot-opt py-2 rounded-xl text-xs font-bold border border-emerald-500 bg-emerald-600 text-white transition-colors">
+          class="shot-opt py-2 rounded-xl text-xs font-bold border border-blue-500 bg-blue-600 text-white transition-colors">
           Vorhand
         </button>
         <button type="button" data-shot-type="Rückhand"
@@ -674,15 +891,15 @@
       <span class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">3. Ausgang / Kategorie</span>
       <div class="grid grid-cols-3 gap-2.5">
         <button type="button" data-category="winner"
-          class="category-btn py-3.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm shadow-sm transition-all">
+          class="category-btn py-3.5 px-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm shadow-sm transition-all">
           Winner
         </button>
         <button type="button" data-category="ue"
-          class="category-btn py-3.5 px-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm shadow-sm transition-all">
+          class="category-btn py-3.5 px-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs sm:text-sm shadow-sm transition-all">
           Unforced Error
         </button>
         <button type="button" data-category="fe"
-          class="category-btn py-3.5 px-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm shadow-sm transition-all">
+          class="category-btn py-3.5 px-2 rounded-xl bg-orange-500/20 hover:bg-orange-500/30 text-orange-900 dark:text-orange-200 border border-orange-500/40 font-bold text-xs sm:text-sm transition-all">
           Forced Error
         </button>
       </div>
@@ -770,9 +987,11 @@
       const STORAGE_KEY = 'courtpulse_pro_data_v1';
       const THEME_KEY = 'courtpulse_pro_theme_v1';
       const FIREBASE_DB_KEY = 'courtpulse_pro_firebase_db_v1';
+      const FIREBASE_API_KEY_STORAGE = 'courtpulse_pro_firebase_apikey_v1';
       const MAX_U10_SECONDS = 3600;
 
       const DEFAULT_FIREBASE_DB_URL = 'https://court-pulse-7e8ed-default-rtdb.europe-west1.firebasedatabase.app';
+      const DEFAULT_FIREBASE_WEB_API_KEY = '';
       const ALLOW_SPECTATOR_CREATE_MATCHES = false;
 
       const SHOT_TREE_SPEC = [
@@ -824,7 +1043,17 @@
       let appData = {
         app: 'CourtPulse Pro',
         activeMatchId: null,
-        matches: []
+        matches: [],
+        playerProfiles: []
+      };
+
+      let authState = {
+        user: null,
+        idToken: null,
+        authMode: 'login',
+        syncing: false,
+        lastCloudSyncAt: null,
+        firebaseAuthInstance: null
       };
 
       let uiState = {
@@ -834,6 +1063,7 @@
         pendingRallyLength: '0-4',
         pendingShotType: 'Vorhand',
         selectedSetFilter: 'all',
+        archivePlayerFilter: 'all',
         expandedTreeNodes: { winner: true, ue: true, fe: false },
         selectedNoteId: null,
         timerIntervalId: null,
@@ -952,14 +1182,10 @@
 
       function installGlobalErrorGuards() {
         window.addEventListener('error', (ev) => {
-          if (ev && ev.message) {
-            console.warn('[CourtPulse Guard]', ev.message);
-          }
+          if (ev && ev.message) console.warn('[CourtPulse Guard]', ev.message);
         });
         window.addEventListener('unhandledrejection', (ev) => {
-          if (ev && ev.reason) {
-            console.warn('[CourtPulse Promise Guard]', ev.reason);
-          }
+          if (ev && ev.reason) console.warn('[CourtPulse Promise Guard]', ev.reason);
         });
       }
 
@@ -980,6 +1206,442 @@
           link.href = URL.createObjectURL(blob);
           document.head.appendChild(link);
         } catch (_) {}
+      }
+
+      function normalizeFirebaseDbUrl(rawUrl) {
+        const trimmed = String(rawUrl ?? '').trim().replace(/\/+$/, '');
+        if (!trimmed) return '';
+        if (!/^https:\/\/[a-zA-Z0-9.-]+/.test(trimmed)) return '';
+        return trimmed;
+      }
+
+      function getConfiguredFirebaseDbUrl() {
+        try {
+          if (uiState.spectatorDbUrl) return normalizeFirebaseDbUrl(uiState.spectatorDbUrl);
+          const stored = localStorage.getItem(FIREBASE_DB_KEY);
+          if (stored) return normalizeFirebaseDbUrl(stored);
+        } catch (_) {}
+        return normalizeFirebaseDbUrl(DEFAULT_FIREBASE_DB_URL);
+      }
+
+      function getConfiguredFirebaseWebApiKey() {
+        try {
+          const stored = localStorage.getItem(FIREBASE_API_KEY_STORAGE);
+          if (stored && stored.trim()) return stored.trim();
+        } catch (_) {}
+        return DEFAULT_FIREBASE_WEB_API_KEY.trim();
+      }
+
+      function initFirebaseAuthSdk() {
+        const apiKey = getConfiguredFirebaseWebApiKey();
+        const dbUrl = getConfiguredFirebaseDbUrl();
+        const noticeEl = document.getElementById('firebaseAuthConfigNotice');
+        if (!apiKey) {
+          noticeEl?.classList.remove('hidden');
+          return null;
+        }
+        noticeEl?.classList.add('hidden');
+        try {
+          if (typeof window.firebase === 'undefined') return null;
+          const projectMatch = dbUrl.match(/^https:\/\/([a-z0-9-]+?)(?:-default-rtdb)?\./i);
+          const projectId = projectMatch ? projectMatch[1] : 'court-pulse-7e8ed';
+          const config = {
+            apiKey,
+            authDomain: `${projectId}.firebaseapp.com`,
+            databaseURL: dbUrl,
+            projectId
+          };
+          const app = window.firebase.apps && window.firebase.apps.length
+            ? window.firebase.app()
+            : window.firebase.initializeApp(config);
+          const auth = window.firebase.auth(app);
+          authState.firebaseAuthInstance = auth;
+          auth.onAuthStateChanged(async (user) => {
+            if (user) {
+              const token = await user.getIdToken();
+              authState.user = {
+                uid: user.uid,
+                email: user.email || '',
+                displayName: user.displayName || (user.email ? user.email.split('@')[0] : 'Tracker'),
+                photoURL: user.photoURL || ''
+              };
+              authState.idToken = token;
+              renderAccountUI();
+              await pullUserCloudData(true);
+            } else {
+              authState.user = null;
+              authState.idToken = null;
+              renderAccountUI();
+            }
+          });
+          return auth;
+        } catch (err) {
+          console.warn('[CourtPulse Auth Init]', err);
+          return null;
+        }
+      }
+
+      async function pushUserCloudData(silent = true) {
+        if (!authState.user || !authState.idToken || uiState.isSpectator) return;
+        const dbUrl = getConfiguredFirebaseDbUrl();
+        if (!dbUrl) return;
+        authState.syncing = true;
+        renderAccountUI();
+        try {
+          const payload = {
+            profile: {
+              email: authState.user.email,
+              displayName: authState.user.displayName,
+              updatedAt: Date.now()
+            },
+            matches: {},
+            players: {}
+          };
+          appData.matches.forEach(m => {
+            payload.matches[m.id] = {
+              ...m,
+              durationSec: getMatchDurationSeconds(m),
+              updatedAt: Date.now()
+            };
+          });
+          appData.playerProfiles.forEach(p => {
+            payload.players[p.id] = p;
+          });
+          const resp = await fetch(`${dbUrl}/users/${encodeURIComponent(authState.user.uid)}.json?auth=${encodeURIComponent(authState.idToken)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          authState.lastCloudSyncAt = Date.now();
+          if (!silent) showToast('Match-Historie & Spielerprofile in der Cloud gesichert!', 'success');
+        } catch (err) {
+          if (!silent) showToast('Cloud-Sync fehlgeschlagen (Firebase-Regeln prüfen).', 'error');
+        } finally {
+          authState.syncing = false;
+          renderAccountUI();
+        }
+      }
+
+      async function pullUserCloudData(mergeWithLocal = true) {
+        if (!authState.user || !authState.idToken || uiState.isSpectator) return;
+        const dbUrl = getConfiguredFirebaseDbUrl();
+        if (!dbUrl) return;
+        authState.syncing = true;
+        renderAccountUI();
+        try {
+          const resp = await fetch(`${dbUrl}/users/${encodeURIComponent(authState.user.uid)}.json?auth=${encodeURIComponent(authState.idToken)}`);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const remote = await resp.json();
+          if (remote && typeof remote === 'object') {
+            const remoteMatches = remote.matches ? Object.values(remote.matches).map((m, i) => sanitizeAndRebuildMatch(m, i)) : [];
+            const remotePlayers = remote.players ? Object.values(remote.players).map((p, i) => sanitizePlayerProfile(p, i)) : [];
+
+            if (mergeWithLocal) {
+              const mergedMatchesMap = new Map();
+              remoteMatches.forEach(m => mergedMatchesMap.set(m.id, m));
+              appData.matches.forEach(m => {
+                if (!mergedMatchesMap.has(m.id)) mergedMatchesMap.set(m.id, m);
+              });
+              if (mergedMatchesMap.size > 0) {
+                appData.matches = Array.from(mergedMatchesMap.values());
+                if (!appData.matches.some(m => m.id === appData.activeMatchId)) {
+                  appData.activeMatchId = appData.matches[0].id;
+                }
+              }
+
+              const mergedPlayersMap = new Map();
+              remotePlayers.forEach(p => mergedPlayersMap.set(p.id, p));
+              appData.playerProfiles.forEach(p => {
+                if (!mergedPlayersMap.has(p.id)) mergedPlayersMap.set(p.id, p);
+              });
+              appData.playerProfiles = Array.from(mergedPlayersMap.values());
+            } else {
+              if (remoteMatches.length) appData.matches = remoteMatches;
+              if (remotePlayers.length) appData.playerProfiles = remotePlayers;
+            }
+            persistStorageLocalOnly();
+            renderAllViews();
+          }
+          await pushUserCloudData(true);
+        } catch (err) {
+          console.warn('[CourtPulse Pull Cloud]', err);
+        } finally {
+          authState.syncing = false;
+          renderAccountUI();
+        }
+      }
+
+      function openAuthModal() {
+        if (uiState.isSpectator) return;
+        initFirebaseAuthSdk();
+        document.getElementById('authModalBackdrop')?.classList.remove('hidden');
+        document.getElementById('authModalBox')?.classList.remove('hidden');
+      }
+
+      function closeAuthModal() {
+        document.getElementById('authModalBackdrop')?.classList.add('hidden');
+        document.getElementById('authModalBox')?.classList.add('hidden');
+      }
+
+      function setAuthModalMode(mode) {
+        authState.authMode = mode === 'register' ? 'register' : 'login';
+        const isReg = authState.authMode === 'register';
+        document.getElementById('authNameFieldWrap')?.classList.toggle('hidden', !isReg);
+        const submitBtn = document.getElementById('emailAuthSubmitBtn');
+        if (submitBtn) submitBtn.textContent = isReg ? 'Konto erstellen & anmelden' : 'Anmelden';
+
+        const loginTab = document.getElementById('authModeLoginTab');
+        const regTab = document.getElementById('authModeRegisterTab');
+        if (loginTab && regTab) {
+          loginTab.className = !isReg
+            ? 'py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-sm'
+            : 'py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400';
+          regTab.className = isReg
+            ? 'py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-sm'
+            : 'py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400';
+        }
+      }
+
+      function renderAccountUI() {
+        const isSpectator = Boolean(uiState.isSpectator);
+        document.getElementById('headerAccountBtn')?.classList.toggle('hidden', isSpectator);
+        document.getElementById('accountStatusCard')?.classList.toggle('hidden', isSpectator);
+        if (isSpectator) return;
+
+        const isLoggedIn = Boolean(authState.user);
+        const dot = document.getElementById('headerAccountDot');
+        const lbl = document.getElementById('headerAccountLabel');
+        const avatar = document.getElementById('accountAvatarCircle');
+        const dispName = document.getElementById('accountDisplayName');
+        const badge = document.getElementById('cloudSyncBadge');
+        const subInfo = document.getElementById('accountSubInfo');
+        const openBtn = document.getElementById('openAuthModalBtn');
+        const logoutBtn = document.getElementById('logoutUserBtn');
+        const syncBtn = document.getElementById('syncCloudNowBtn');
+
+        if (isLoggedIn) {
+          const name = authState.user.displayName || authState.user.email || 'Tracker';
+          if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+          if (lbl) lbl.textContent = name;
+          if (avatar) avatar.textContent = name.slice(0, 2).toUpperCase();
+          if (dispName) dispName.textContent = name;
+          if (badge) {
+            badge.textContent = authState.syncing ? 'Synchronisiert…' : '● Cloud-Historie aktiv';
+            badge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30';
+          }
+          if (subInfo) {
+            const syncTime = authState.lastCloudSyncAt
+              ? ` • Letzter Sync: ${new Date(authState.lastCloudSyncAt).toLocaleTimeString('de-DE')}`
+              : '';
+            subInfo.textContent = `${authState.user.email} (${appData.matches.length} Matches, ${appData.playerProfiles.length} Spielerprofile)${syncTime}`;
+          }
+          openBtn?.classList.add('hidden');
+          logoutBtn?.classList.remove('hidden');
+          syncBtn?.classList.remove('hidden');
+        } else {
+          if (dot) dot.className = 'w-2 h-2 rounded-full bg-slate-400';
+          if (lbl) lbl.textContent = 'Anmelden';
+          if (avatar) avatar.textContent = 'CP';
+          if (dispName) dispName.textContent = 'Lokaler Gast-Modus';
+          if (badge) {
+            badge.textContent = 'Nur lokal gespeichert';
+            badge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
+          }
+          if (subInfo) {
+            subInfo.textContent = 'Melde dich an, um deine Match-Historie und Spielerprofile geräteübergreifend in der Cloud zu sichern.';
+          }
+          openBtn?.classList.remove('hidden');
+          logoutBtn?.classList.add('hidden');
+          syncBtn?.classList.add('hidden');
+        }
+      }
+
+      function sanitizePlayerProfile(raw, idx = 0) {
+        const p = (raw && typeof raw === 'object') ? raw : {};
+        return {
+          id: String(p.id || `pl_${Date.now()}_${idx}`),
+          name: String(p.name || `Spieler ${idx + 1}`).trim() || `Spieler ${idx + 1}`,
+          hand: p.hand === 'Linkshänder' ? 'Linkshänder' : 'Rechtshänder',
+          backhand: p.backhand === 'Einhändig' ? 'Einhändig' : 'Zweihändig',
+          lkOrYear: String(p.lkOrYear || '').trim(),
+          playStyle: String(p.playStyle || 'Allrounder').trim(),
+          focusNotes: String(p.focusNotes || '').trim()
+        };
+      }
+
+      function computeCareerStatsForPlayer(playerName) {
+        const target = String(playerName || '').trim().toLowerCase();
+        const summary = {
+          matchesPlayed: 0,
+          wins: 0,
+          losses: 0,
+          firstServeInSum: 0,
+          firstServeTotalSum: 0,
+          winnersSum: 0,
+          ueSum: 0,
+          ratingSums: { overall: 0, serve: 0, forehand: 0, backhand: 0, net: 0 },
+          ratedMatches: 0
+        };
+
+        if (!target) return summary;
+
+        appData.matches.forEach(m => {
+          const idx0 = String(m.players[0] || '').trim().toLowerCase() === target;
+          const idx1 = String(m.players[1] || '').trim().toLowerCase() === target;
+          if (!idx0 && !idx1) return;
+          const pIdx = idx0 ? 0 : 1;
+
+          summary.matchesPlayed += 1;
+          if (m.state?.completed && m.winnerIndex !== null) {
+            if (m.winnerIndex === pIdx) summary.wins += 1;
+            else summary.losses += 1;
+          }
+
+          const st = computeMatchStatistics(m, 'all');
+          summary.firstServeInSum += st.firstServeIn[pIdx] || 0;
+          summary.firstServeTotalSum += st.firstServeTotal[pIdx] || 0;
+          summary.winnersSum += st.winnersTotal[pIdx] || 0;
+          summary.ueSum += st.ueTotal[pIdx] || 0;
+
+          if (st.performanceRating && st.performanceRating[pIdx]) {
+            summary.ratedMatches += 1;
+            summary.ratingSums.overall += st.performanceRating[pIdx].overall;
+            summary.ratingSums.serve += st.performanceRating[pIdx].serve;
+            summary.ratingSums.forehand += st.performanceRating[pIdx].forehand;
+            summary.ratingSums.backhand += st.performanceRating[pIdx].backhand;
+            summary.ratingSums.net += st.performanceRating[pIdx].net;
+          }
+        });
+
+        return summary;
+      }
+
+      function openPlayerModal(profile = null) {
+        if (uiState.isSpectator) return;
+        document.getElementById('playerModalTitle').textContent = profile ? 'Spielerprofil bearbeiten' : 'Neues Spielerprofil anlegen';
+        document.getElementById('editPlayerIdInput').value = profile ? profile.id : '';
+        document.getElementById('profileNameInput').value = profile ? profile.name : '';
+        document.getElementById('profileHandSelect').value = profile ? profile.hand : 'Rechtshänder';
+        document.getElementById('profileBackhandSelect').value = profile ? profile.backhand : 'Zweihändig';
+        document.getElementById('profileLkInput').value = profile ? profile.lkOrYear : '';
+        document.getElementById('profileStyleSelect').value = profile ? profile.playStyle : 'Allrounder';
+        document.getElementById('profileNotesInput').value = profile ? profile.focusNotes : '';
+
+        document.getElementById('playerModalBackdrop')?.classList.remove('hidden');
+        document.getElementById('playerModalBox')?.classList.remove('hidden');
+      }
+
+      function closePlayerModal() {
+        document.getElementById('playerModalBackdrop')?.classList.add('hidden');
+        document.getElementById('playerModalBox')?.classList.add('hidden');
+      }
+
+      function renderPlayerProfilesSection() {
+        const grid = document.getElementById('playerProfilesGrid');
+        const picker0 = document.getElementById('player0ProfilePicker');
+        const picker1 = document.getElementById('player1ProfilePicker');
+        const archiveFilter = document.getElementById('archivePlayerFilter');
+
+        const profileOptionsHtml = `<option value="">Profil wählen…</option>` + appData.playerProfiles.map(p =>
+          `<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`
+        ).join('');
+
+        if (picker0) picker0.innerHTML = profileOptionsHtml;
+        if (picker1) picker1.innerHTML = profileOptionsHtml;
+
+        if (archiveFilter) {
+          const allNames = new Set(appData.playerProfiles.map(p => p.name));
+          appData.matches.forEach(m => m.players.forEach(n => allNames.add(n)));
+          const prevVal = uiState.archivePlayerFilter;
+          archiveFilter.innerHTML = `<option value="all">Alle Spieler</option>` + Array.from(allNames).map(n =>
+            `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`
+          ).join('');
+          archiveFilter.value = Array.from(allNames).includes(prevVal) ? prevVal : 'all';
+        }
+
+        if (!grid) return;
+        if (!appData.playerProfiles.length) {
+          grid.innerHTML = `
+            <div class="col-span-full p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              Noch keine Spielerprofile angelegt. Klicke oben auf <strong>„+ Spielerprofil anlegen“</strong>, um Stammdaten &amp; Saison-Statistiken zu verfolgen.
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = appData.playerProfiles.map(p => {
+          const stats = computeCareerStatsForPlayer(p.name);
+          const fsPct = stats.firstServeTotalSum > 0
+            ? `${Math.round((stats.firstServeInSum / stats.firstServeTotalSum) * 100)} %`
+            : '–';
+          const avgOverall = stats.ratedMatches > 0
+            ? (stats.ratingSums.overall / stats.ratedMatches).toFixed(1)
+            : '–';
+          const avgServe = stats.ratedMatches > 0
+            ? (stats.ratingSums.serve / stats.ratedMatches).toFixed(1)
+            : '–';
+          const avgFh = stats.ratedMatches > 0
+            ? (stats.ratingSums.forehand / stats.ratedMatches).toFixed(1)
+            : '–';
+          const avgBh = stats.ratedMatches > 0
+            ? (stats.ratingSums.backhand / stats.ratedMatches).toFixed(1)
+            : '–';
+
+          return `
+            <div class="p-4 rounded-xl border border-slate-300/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 space-y-2.5">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">${escapeHtml(p.name)}</span>
+                    ${p.lkOrYear ? `<span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300">${escapeHtml(p.lkOrYear)}</span>` : ''}
+                  </div>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    ${escapeHtml(p.hand)} • RH ${escapeHtml(p.backhand)} • ${escapeHtml(p.playStyle)}
+                  </p>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <button type="button" data-player-action="edit" data-player-id="${escapeHtml(p.id)}"
+                    class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-200/80 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600">
+                    Bearbeiten
+                  </button>
+                  <button type="button" data-player-action="delete" data-player-id="${escapeHtml(p.id)}"
+                    class="px-2 py-1 rounded-lg text-xs font-semibold bg-rose-600/15 text-rose-700 dark:text-rose-300 hover:bg-rose-600/25">
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-4 gap-1.5 pt-1 text-center">
+                <div class="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                  <div class="text-[10px] text-slate-500 uppercase">Matches</div>
+                  <div class="text-xs font-extrabold text-slate-900 dark:text-white">${stats.matchesPlayed} (${stats.wins}S/${stats.losses}N)</div>
+                </div>
+                <div class="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                  <div class="text-[10px] text-slate-500 uppercase">1. Aufschl.</div>
+                  <div class="text-xs font-extrabold text-blue-700 dark:text-blue-400">${fsPct}</div>
+                </div>
+                <div class="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                  <div class="text-[10px] text-slate-500 uppercase">W / UE</div>
+                  <div class="text-xs font-extrabold text-slate-900 dark:text-white">${stats.winnersSum} / ${stats.ueSum}</div>
+                </div>
+                <div class="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                  <div class="text-[10px] text-slate-500 uppercase">Ø Rating</div>
+                  <div class="text-xs font-extrabold text-emerald-700 dark:text-emerald-400">${avgOverall} / 10</div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
+                <span>Ø Aufschlag: <strong>${avgServe}</strong> • VH: <strong>${avgFh}</strong> • RH: <strong>${avgBh}</strong></span>
+                <button type="button" data-player-action="filter-matches" data-player-name="${escapeHtml(p.name)}"
+                  class="text-blue-700 dark:text-blue-400 font-semibold hover:underline">
+                  Matches zeigen →
+                </button>
+              </div>
+              ${p.focusNotes ? `<p class="text-[11px] italic text-slate-600 dark:text-slate-400 border-t border-slate-200/70 dark:border-slate-800 pt-1.5">Fokus: ${escapeHtml(p.focusNotes)}</p>` : ''}
+            </div>
+          `;
+        }).join('');
       }
 
       function createInitialMatchState(format, firstServer) {
@@ -1272,10 +1934,17 @@
         };
       }
 
-      function persistStorage() {
+      function persistStorageLocalOnly() {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
         } catch (_) {}
+      }
+
+      function persistStorage() {
+        persistStorageLocalOnly();
+        if (authState.user && authState.idToken && !uiState.isSpectator) {
+          pushUserCloudData(true);
+        }
       }
 
       function buildDemoMatchObject() {
@@ -1377,50 +2046,77 @@
         }, 0);
       }
 
+      function buildDefaultPlayerProfiles() {
+        return [
+          sanitizePlayerProfile({
+            id: 'pl_moritz',
+            name: 'Moritz',
+            hand: 'Rechtshänder',
+            backhand: 'Zweihändig',
+            lkOrYear: 'U14 / Leistungskader',
+            playStyle: 'Allrounder',
+            focusNotes: '1. Aufschlag-Quote & Break-Absicherung'
+          }, 0),
+          sanitizePlayerProfile({
+            id: 'pl_felix',
+            name: 'Felix Meinen',
+            hand: 'Rechtshänder',
+            backhand: 'Zweihändig',
+            lkOrYear: 'U14 / Turnierspieler',
+            playStyle: 'Aggressiver Grundlinienspieler',
+            focusNotes: 'Aufschlag-Dominanz & Vorhand-Druck'
+          }, 1)
+        ];
+      }
+
       function loadAndHealStorage() {
         try {
           const raw = localStorage.getItem(STORAGE_KEY);
           if (!raw) {
             const demo = buildDemoMatchObject();
-            appData = { app: 'CourtPulse Pro', activeMatchId: demo.id, matches: [demo] };
-            persistStorage();
+            appData = {
+              app: 'CourtPulse Pro',
+              activeMatchId: demo.id,
+              matches: [demo],
+              playerProfiles: buildDefaultPlayerProfiles()
+            };
+            persistStorageLocalOnly();
             return;
           }
           const parsed = JSON.parse(raw);
           const list = Array.isArray(parsed?.matches) ? parsed.matches : [];
+          const profiles = Array.isArray(parsed?.playerProfiles)
+            ? parsed.playerProfiles.map((p, i) => sanitizePlayerProfile(p, i))
+            : buildDefaultPlayerProfiles();
+
           if (!list.length) {
             const demo = buildDemoMatchObject();
-            appData = { app: 'CourtPulse Pro', activeMatchId: demo.id, matches: [demo] };
-            persistStorage();
+            appData = {
+              app: 'CourtPulse Pro',
+              activeMatchId: demo.id,
+              matches: [demo],
+              playerProfiles: profiles
+            };
+            persistStorageLocalOnly();
             return;
           }
           appData.matches = list.map((m, i) => sanitizeAndRebuildMatch(m, i));
+          appData.playerProfiles = profiles;
           appData.activeMatchId = parsed.activeMatchId || appData.matches[0].id;
           if (!appData.matches.some(m => m.id === appData.activeMatchId)) {
             appData.activeMatchId = appData.matches[0].id;
           }
         } catch (_) {
           const demo = buildDemoMatchObject();
-          appData = { app: 'CourtPulse Pro', activeMatchId: demo.id, matches: [demo] };
-          persistStorage();
+          appData = {
+            app: 'CourtPulse Pro',
+            activeMatchId: demo.id,
+            matches: [demo],
+            playerProfiles: buildDefaultPlayerProfiles()
+          };
+          persistStorageLocalOnly();
           document.getElementById('selfHealNotice')?.classList.remove('hidden');
         }
-      }
-
-      function normalizeFirebaseDbUrl(rawUrl) {
-        const trimmed = String(rawUrl ?? '').trim().replace(/\/+$/, '');
-        if (!trimmed) return '';
-        if (!/^https:\/\/[a-zA-Z0-9.-]+/.test(trimmed)) return '';
-        return trimmed;
-      }
-
-      function getConfiguredFirebaseDbUrl() {
-        try {
-          if (uiState.spectatorDbUrl) return normalizeFirebaseDbUrl(uiState.spectatorDbUrl);
-          const stored = localStorage.getItem(FIREBASE_DB_KEY);
-          if (stored) return normalizeFirebaseDbUrl(stored);
-        } catch (_) {}
-        return normalizeFirebaseDbUrl(DEFAULT_FIREBASE_DB_URL);
       }
 
       function buildShareableLiveUrl(match) {
@@ -1499,7 +2195,8 @@
             durationSec: getMatchDurationSeconds(match),
             updatedAt: Date.now()
           };
-          const resp = await fetch(`${dbUrl}/courtpulse_live/${encodeURIComponent(match.id)}.json`, {
+          const authQuery = authState.idToken ? `?auth=${encodeURIComponent(authState.idToken)}` : '';
+          const resp = await fetch(`${dbUrl}/courtpulse_live/${encodeURIComponent(match.id)}.json${authQuery}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -1568,7 +2265,7 @@
             points: [],
             notes: []
           }, 0);
-          appData = { app: 'CourtPulse Pro', activeMatchId: placeholder.id, matches: [placeholder] };
+          appData = { app: 'CourtPulse Pro', activeMatchId: placeholder.id, matches: [placeholder], playerProfiles: [] };
 
           fetchSpectatorMatchSnapshot(false);
           uiState.spectatorPollId = setInterval(() => fetchSpectatorMatchSnapshot(false), 2500);
@@ -1608,19 +2305,25 @@
 
         if (uiState.serveAttempt === 1) {
           faultBtn.textContent = '1. Aufschlag Fehler';
-          faultBtn.className = 'py-3.5 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] border bg-amber-500/15 hover:bg-amber-500/25 text-amber-900 dark:text-amber-300 border-amber-500/40';
-          if (label) label.textContent = '1. Aufschlag aktiv';
+          faultBtn.className = 'py-3.5 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] border bg-orange-500/15 hover:bg-orange-500/25 text-orange-800 dark:text-orange-300 border-orange-500/40';
+          if (label) {
+            label.textContent = '1. Aufschlag aktiv';
+            label.className = 'text-xs font-semibold text-blue-700 dark:text-blue-400';
+          }
           if (badge) {
             badge.textContent = '1. Aufschlag aktiv';
-            badge.className = 'text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-800 dark:text-emerald-300';
+            badge.className = 'text-[11px] font-semibold text-slate-500 dark:text-slate-400';
           }
         } else {
           faultBtn.textContent = 'Doppelfehler';
-          faultBtn.className = 'py-3.5 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] border bg-rose-600 hover:bg-rose-500 text-white border-rose-500 shadow-sm';
-          if (label) label.textContent = '2. Aufschlag aktiv';
+          faultBtn.className = 'py-3.5 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] border bg-orange-600 hover:bg-orange-500 text-white border-orange-500 shadow-sm';
+          if (label) {
+            label.textContent = '2. Aufschlag aktiv';
+            label.className = 'text-xs font-bold text-orange-700 dark:text-orange-400';
+          }
           if (badge) {
             badge.textContent = '2. Aufschlag aktiv';
-            badge.className = 'text-xs font-bold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-900 dark:text-amber-300';
+            badge.className = 'text-[11px] font-bold text-orange-700 dark:text-orange-400';
           }
         }
       }
@@ -1723,7 +2426,14 @@
         uiState.pendingRallyLength = '0-4';
         uiState.pendingShotType = 'Vorhand';
         const title = document.getElementById('sheetTitle');
+        const kicker = document.getElementById('sheetKicker');
+        const isOrange = uiState.pendingPointWinner === 1;
         if (title) title.textContent = `Punkt für ${match.players[uiState.pendingPointWinner]}`;
+        if (kicker) {
+          kicker.className = isOrange
+            ? 'text-xs font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400'
+            : 'text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400';
+        }
         updateRallyButtonsVisual();
         updateShotButtonsVisual();
         document.getElementById('bottomSheetBackdrop')?.classList.remove('hidden');
@@ -1736,19 +2446,27 @@
       }
 
       function updateRallyButtonsVisual() {
+        const isOrange = uiState.pendingPointWinner === 1;
+        const activeStyle = isOrange
+          ? 'rally-opt py-2.5 rounded-xl text-sm font-bold border border-orange-500 bg-orange-500 text-white transition-colors'
+          : 'rally-opt py-2.5 rounded-xl text-sm font-bold border border-blue-500 bg-blue-600 text-white transition-colors';
         document.querySelectorAll('.rally-opt').forEach(btn => {
           const active = btn.getAttribute('data-rally') === uiState.pendingRallyLength;
           btn.className = active
-            ? 'rally-opt py-2.5 rounded-xl text-sm font-bold border border-emerald-500 bg-emerald-600 text-white transition-colors'
+            ? activeStyle
             : 'rally-opt py-2.5 rounded-xl text-sm font-bold border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 transition-colors';
         });
       }
 
       function updateShotButtonsVisual() {
+        const isOrange = uiState.pendingPointWinner === 1;
+        const activeStyle = isOrange
+          ? 'shot-opt py-2 rounded-xl text-xs font-bold border border-orange-500 bg-orange-500 text-white transition-colors'
+          : 'shot-opt py-2 rounded-xl text-xs font-bold border border-blue-500 bg-blue-600 text-white transition-colors';
         document.querySelectorAll('.shot-opt').forEach(btn => {
           const active = btn.getAttribute('data-shot-type') === uiState.pendingShotType;
           btn.className = active
-            ? 'shot-opt py-2 rounded-xl text-xs font-bold border border-emerald-500 bg-emerald-600 text-white transition-colors'
+            ? activeStyle
             : 'shot-opt py-2 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 transition-colors';
         });
       }
@@ -2224,12 +2942,17 @@
       function renderStartView() {
         const isLockedSpectator = Boolean(uiState.isSpectator && !ALLOW_SPECTATOR_CREATE_MATCHES);
         document.getElementById('newMatchCardSection')?.classList.toggle('hidden', isLockedSpectator);
+        document.getElementById('playerProfilesSection')?.classList.toggle('hidden', isLockedSpectator);
         document.getElementById('spectatorLockedNotice')?.classList.toggle('hidden', !isLockedSpectator);
         document.getElementById('tabStart')?.classList.toggle('hidden', isLockedSpectator);
+
+        renderAccountUI();
+        renderPlayerProfilesSection();
 
         const listEl = document.getElementById('matchArchiveList');
         const datalist = document.getElementById('knownPlayersList');
         const playersSet = new Set(['Moritz', 'Felix Meinen']);
+        appData.playerProfiles.forEach(p => playersSet.add(p.name));
         appData.matches.forEach(m => m.players.forEach(p => playersSet.add(p)));
 
         if (datalist) {
@@ -2237,7 +2960,17 @@
         }
 
         if (!listEl) return;
-        listEl.innerHTML = appData.matches.map(m => {
+        const filterName = uiState.archivePlayerFilter;
+        const visibleMatches = filterName === 'all'
+          ? appData.matches
+          : appData.matches.filter(m => m.players.some(p => p.toLowerCase() === filterName.toLowerCase()));
+
+        if (!visibleMatches.length) {
+          listEl.innerHTML = `<p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic">Keine Matches für den gewählten Spielerfilter gefunden.</p>`;
+          return;
+        }
+
+        listEl.innerHTML = visibleMatches.map(m => {
           const setsStr = (m.state.sets || []).map(s => `${s[0]}:${s[1]}`).join(' • ') || `${m.state.games[0]}:${m.state.games[1]}`;
           const isCurrent = m.id === appData.activeMatchId;
           return `
@@ -2278,7 +3011,7 @@
         const headerSub = document.getElementById('headerSubtitle');
         if (headerSub) headerSub.textContent = `${match.players[0]} vs. ${match.players[1]}`;
 
-        document.getElementById('liveTournamentBadge').textContent = `${match.tournament} (${match.surface})`;
+        document.getElementById('liveTournamentBadge').textContent = `${match.tournament} • ${match.surface}`;
         document.getElementById('liveDurationBadge').textContent = `Dauer: ${formatDurationText(getMatchDurationSeconds(match))}`;
         document.getElementById('liveName0').textContent = match.players[0];
         document.getElementById('liveName1').textContent = match.players[1];
@@ -2331,12 +3064,9 @@
         }
 
         document.getElementById('spectatorBanner')?.classList.toggle('hidden', !uiState.isSpectator);
+        document.getElementById('liveMatchActionsSection')?.classList.toggle('hidden', uiState.isSpectator);
         document.getElementById('liveServeSection')?.classList.toggle('hidden', uiState.isSpectator);
         document.getElementById('livePointsSection')?.classList.toggle('hidden', uiState.isSpectator);
-        document.getElementById('shareLiveLinkBtn')?.classList.toggle('hidden', uiState.isSpectator);
-        document.getElementById('undoPointBtn')?.classList.toggle('hidden', uiState.isSpectator);
-        document.getElementById('openNoteModalBtn')?.classList.toggle('hidden', uiState.isSpectator);
-        document.getElementById('finishMatchManualBtn')?.classList.toggle('hidden', uiState.isSpectator);
 
         updateServeButtonsVisual();
 
@@ -2346,12 +3076,12 @@
         if (notesList) {
           notesList.innerHTML = match.notes.length
             ? [...match.notes].reverse().map(n => `
-              <div class="p-2.5 rounded-xl bg-amber-500/10 dark:bg-slate-800/70 border border-amber-500/30 dark:border-slate-700">
-                <span class="font-bold text-amber-800 dark:text-amber-400">[${escapeHtml(n.id)} • Pkt. #${n.pointIndex} • ${escapeHtml(n.scoreContext)}]:</span>
+              <div class="p-2.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                <span class="font-bold text-slate-700 dark:text-slate-300">[${escapeHtml(n.id)} • Pkt. #${n.pointIndex} • ${escapeHtml(n.scoreContext)}]:</span>
                 <span class="text-slate-800 dark:text-slate-200">${escapeHtml(n.text)}</span>
               </div>
             `).join('')
-            : `<p class="text-slate-500 dark:text-slate-400 italic">Noch keine Seitenwechsel-Notizen erfasst.</p>`;
+            : `<p class="text-slate-500 dark:text-slate-400 italic">Noch keine Notizen erfasst.</p>`;
         }
       }
 
@@ -2841,9 +3571,7 @@
 
         function drawRect(x, yTop, w, h, fillRgb, strokeRgb, lineWidth = 0.6) {
           const yBottom = yTop - h;
-          if (fillRgb) {
-            ops.push(`${fillRgb[0]} ${fillRgb[1]} ${fillRgb[2]} rg`);
-          }
+          if (fillRgb) ops.push(`${fillRgb[0]} ${fillRgb[1]} ${fillRgb[2]} rg`);
           if (strokeRgb) {
             ops.push(`${strokeRgb[0]} ${strokeRgb[1]} ${strokeRgb[2]} RG`);
             ops.push(`${fNum(lineWidth)} w`);
@@ -2909,14 +3637,10 @@
           renderTableHeader();
 
           rows.forEach((row, rIdx) => {
-            if (ensureSpace(rowH)) {
-              renderTableHeader();
-            }
+            if (ensureSpace(rowH)) renderTableHeader();
             const isTotal = Boolean(row.isTotal);
             const isSub = Boolean(row.isSub);
-            const fill = isTotal
-              ? [0.93, 0.99, 0.96]
-              : (rIdx % 2 === 1 ? [0.97, 0.98, 0.99] : [1, 1, 1]);
+            const fill = isTotal ? [0.93, 0.99, 0.96] : (rIdx % 2 === 1 ? [0.97, 0.98, 0.99] : [1, 1, 1]);
             const textColor = isTotal ? [0.02, 0.31, 0.23] : [0.06, 0.09, 0.16];
 
             drawRect(marginL, curY, contentW, rowH, fill, [0.80, 0.84, 0.88], 0.4);
@@ -2979,201 +3703,7 @@
         });
         curY -= 30;
 
-        drawSectionHeader('1. Momentum-Verlauf (Punkte-Differenz & Notiz-Markierungen)');
-        const chartBoxH = 118;
-        ensureSpace(chartBoxH + 14);
-        drawRect(marginL, curY, contentW, chartBoxH, [1, 1, 1], [0.80, 0.84, 0.88], 0.6);
-
-        const cLeft = marginL + 36;
-        const cRight = marginL + contentW - 16;
-        const cTop = curY - 14;
-        const cBottom = curY - chartBoxH + 22;
-        const cMidY = (cTop + cBottom) / 2;
-        const cW = cRight - cLeft;
-        const cH = cTop - cBottom;
-
-        drawLine(cLeft, cTop, cRight, cTop, [0.90, 0.92, 0.95], 0.5);
-        drawLine(cLeft, cBottom, cRight, cBottom, [0.90, 0.92, 0.95], 0.5);
-        drawLine(cLeft, cMidY, cRight, cMidY, [0.45, 0.50, 0.58], 0.8, '3 3');
-
-        if (pts.length > 0) {
-          let diff = 0;
-          const series = [{ idx: 0, diff: 0, pointIndex: pts[0].index - 1, setNumber: pts[0].setNumber }];
-          const setMarkers = [];
-          let lastSet = pts[0].setNumber;
-
-          pts.forEach((p, i) => {
-            if (p.setNumber !== lastSet) {
-              setMarkers.push({ seriesIdx: i, setNumber: p.setNumber });
-              lastSet = p.setNumber;
-            }
-            diff += (p.winner === 0 ? 1 : -1);
-            series.push({ idx: i + 1, diff, pointIndex: p.index, setNumber: p.setNumber });
-          });
-
-          const maxAbs = Math.max(4, ...series.map(s => Math.abs(s.diff)));
-          const xAt = (i) => cLeft + (i / Math.max(1, series.length - 1)) * cW;
-          const yAt = (d) => cMidY + (d / maxAbs) * (cH / 2 - 4);
-
-          drawText(`+${maxAbs}`, cLeft - 5, cTop - 3, { bold: true, size: 7.5, color: [0.02, 0.47, 0.34], align: 'right' });
-          drawText('0', cLeft - 5, cMidY - 2.5, { size: 7.5, color: [0.35, 0.40, 0.48], align: 'right' });
-          drawText(`-${maxAbs}`, cLeft - 5, cBottom - 2, { bold: true, size: 7.5, color: [0.11, 0.31, 0.85], align: 'right' });
-
-          for (let i = 0; i < series.length - 1; i++) {
-            const x1 = xAt(i);
-            const x2 = xAt(i + 1);
-            const d1 = series[i].diff;
-            const d2 = series[i + 1].diff;
-            const y1 = yAt(d1);
-            const y2 = yAt(d2);
-
-            if (d1 >= 0 && d2 >= 0) {
-              ops.push('0.78 0.94 0.87 rg');
-              ops.push(`${fNum(x1)} ${fNum(cMidY)} m ${fNum(x1)} ${fNum(y1)} l ${fNum(x2)} ${fNum(y2)} l ${fNum(x2)} ${fNum(cMidY)} l f`);
-            } else if (d1 <= 0 && d2 <= 0) {
-              ops.push('0.82 0.89 0.99 rg');
-              ops.push(`${fNum(x1)} ${fNum(cMidY)} m ${fNum(x1)} ${fNum(y1)} l ${fNum(x2)} ${fNum(y2)} l ${fNum(x2)} ${fNum(cMidY)} l f`);
-            }
-          }
-
-          setMarkers.forEach(sm => {
-            const sx = xAt(sm.seriesIdx);
-            drawLine(sx, cTop, sx, cBottom, [0.58, 0.64, 0.72], 0.7, '2 2');
-            drawText(`Satz ${sm.setNumber}`, sx + 3, cTop - 8, { bold: true, size: 7.2, color: [0.35, 0.40, 0.48] });
-          });
-
-          ops.push('q');
-          ops.push('0.06 0.09 0.16 RG');
-          ops.push('1.4 w');
-          ops.push('1 J');
-          series.forEach((s, i) => {
-            const px = xAt(i);
-            const py = yAt(s.diff);
-            ops.push(`${fNum(px)} ${fNum(py)} ${i === 0 ? 'm' : 'l'}`);
-          });
-          ops.push('S');
-          ops.push('Q');
-
-          const minPtIdx = pts[0].index;
-          const maxPtIdx = pts[pts.length - 1].index;
-          notes.forEach(n => {
-            if (n.pointIndex < (minPtIdx - 1) || n.pointIndex > maxPtIdx) return;
-            let sIdx = series.findIndex(s => s.pointIndex === n.pointIndex);
-            if (sIdx < 0) sIdx = series.length - 1;
-            const nx = xAt(sIdx);
-            const ny = yAt(series[sIdx].diff);
-            drawRect(nx - 2.3, ny + 2.3, 4.6, 4.6, [0.85, 0.47, 0.02], [1, 1, 1], 0.6);
-          });
-
-          drawText(`Pkt. ${pts[0].index}`, cLeft, curY - chartBoxH + 11, { size: 7.5, color: [0.35, 0.40, 0.48] });
-          drawText(`Pkt. ${pts[pts.length - 1].index} (${diff >= 0 ? '+' : ''}${diff})`, cRight, curY - chartBoxH + 11, {
-            size: 7.5, color: [0.35, 0.40, 0.48], align: 'right'
-          });
-          drawText(`Gruen = ${match.players[0]} vorne  •  Blau = ${match.players[1]} vorne  •  Orange = Notizen`, cLeft + cW / 2, curY - chartBoxH + 11, {
-            size: 7.2, color: [0.35, 0.40, 0.48], align: 'center'
-          });
-        } else {
-          drawText('Noch keine Punkte im gewählten Bereich erfasst', cLeft + cW / 2, cMidY - 3, {
-            size: 9, color: [0.45, 0.50, 0.58], align: 'center'
-          });
-        }
-        curY -= (chartBoxH + 10);
-
-        drawSectionHeader('1B. Performance-Rating Spiderweb (Skala 1.0 - 10.0)');
-        const radarBoxH = 128;
-        ensureSpace(radarBoxH + 10);
-        drawRect(marginL, curY, contentW, radarBoxH, [1, 1, 1], [0.80, 0.84, 0.88], 0.6);
-
-        const rCx = marginL + 95;
-        const rCy = curY - 64;
-        const rMax = 44;
-        const rAxes = [
-          { key: 'overall', label: 'Gesamt' },
-          { key: 'serve', label: 'Aufschlag' },
-          { key: 'forehand', label: 'Vorhand' },
-          { key: 'net', label: 'Netzspiel' },
-          { key: 'backhand', label: 'Rueckhand' }
-        ];
-        const rAngle = (idx) => (-Math.PI / 2) + (idx * (2 * Math.PI) / rAxes.length);
-        const rRad = (val) => ((Math.max(1, Math.min(10, Number(val) || 1)) - 1) / 9) * rMax;
-
-        [2, 4, 6, 8, 10].forEach(lvl => {
-          const rr = rRad(lvl);
-          ops.push('q');
-          ops.push('0.80 0.84 0.88 RG');
-          ops.push(lvl === 10 ? '0.8 w' : '0.45 w');
-          rAxes.forEach((_, idx) => {
-            const a = rAngle(idx);
-            const px = rCx + rr * Math.cos(a);
-            const py = rCy - rr * Math.sin(a);
-            ops.push(`${fNum(px)} ${fNum(py)} ${idx === 0 ? 'm' : 'l'}`);
-          });
-          ops.push('h S Q');
-        });
-
-        rAxes.forEach((ax, idx) => {
-          const a = rAngle(idx);
-          const x2 = rCx + rMax * Math.cos(a);
-          const y2 = rCy - rMax * Math.sin(a);
-          drawLine(rCx, rCy, x2, y2, [0.65, 0.70, 0.78], 0.55);
-
-          const lx = rCx + (rMax + 11) * Math.cos(a);
-          const ly = rCy - (rMax + 9) * Math.sin(a) - 2.5;
-          const align = Math.cos(a) > 0.25 ? 'left' : (Math.cos(a) < -0.25 ? 'right' : 'center');
-          drawText(ax.label, lx, ly, { bold: true, size: 7.2, color: [0.15, 0.20, 0.28], align });
-        });
-
-        const ratings = st.performanceRating || computePerformanceRatings(st);
-        [
-          { pIdx: 0, stroke: [0.02, 0.47, 0.34] },
-          { pIdx: 1, stroke: [0.11, 0.31, 0.85] }
-        ].forEach(cfg => {
-          ops.push('q');
-          ops.push(`${cfg.stroke[0]} ${cfg.stroke[1]} ${cfg.stroke[2]} RG`);
-          ops.push('1.4 w');
-          rAxes.forEach((ax, idx) => {
-            const a = rAngle(idx);
-            const rr = rRad(ratings[cfg.pIdx][ax.key]);
-            const px = rCx + rr * Math.cos(a);
-            const py = rCy - rr * Math.sin(a);
-            ops.push(`${fNum(px)} ${fNum(py)} ${idx === 0 ? 'm' : 'l'}`);
-          });
-          ops.push('h S Q');
-        });
-
-        const rTableX = marginL + 195;
-        const rTableW = contentW - 205;
-        const rCol0 = rTableW * 0.48;
-        const rCol1 = rTableW * 0.26;
-        let rTy = curY - 10;
-
-        drawRect(rTableX, rTy, rTableW, 16, [0.06, 0.09, 0.16], [0.80, 0.84, 0.88], 0.4);
-        drawText('Kategorie (1-10)', rTableX + 5, rTy - 11, { bold: true, size: 8.0, color: [1, 1, 1] });
-        drawText(match.players[0], rTableX + rCol0 + rCol1 - 5, rTy - 11, { bold: true, size: 8.0, color: [1, 1, 1], align: 'right' });
-        drawText(match.players[1], rTableX + rTableW - 5, rTy - 11, { bold: true, size: 8.0, color: [1, 1, 1], align: 'right' });
-        rTy -= 16;
-
-        [
-          { label: 'Gesamt-Performance', key: 'overall', bold: true },
-          { label: 'Aufschlag', key: 'serve', bold: false },
-          { label: 'Vorhand', key: 'forehand', bold: false },
-          { label: 'Rueckhand', key: 'backhand', bold: false },
-          { label: 'Netzspiel', key: 'net', bold: false }
-        ].forEach((item, idx) => {
-          const bg = item.bold ? [0.93, 0.99, 0.96] : (idx % 2 === 1 ? [0.97, 0.98, 0.99] : [1, 1, 1]);
-          drawRect(rTableX, rTy, rTableW, 15, bg, [0.80, 0.84, 0.88], 0.35);
-          drawText(item.label, rTableX + 5, rTy - 10.5, { bold: item.bold, size: 8.0 });
-          drawText(`${ratings[0][item.key].toFixed(1)} / 10`, rTableX + rCol0 + rCol1 - 5, rTy - 10.5, { bold: item.bold, size: 8.0, align: 'right' });
-          drawText(`${ratings[1][item.key].toFixed(1)} / 10`, rTableX + rTableW - 5, rTy - 10.5, { bold: item.bold, size: 8.0, align: 'right' });
-          rTy -= 15;
-        });
-
-        drawText('VH/RH/Netz: Basis 5.0 (+2.0 Winner / -1.0 UE / -0.5 FE je Schlagvolumen)', rTableX + 2, rTy - 11, {
-          size: 7.2, color: [0.35, 0.40, 0.48]
-        });
-        curY -= (radarBoxH + 10);
-
-        drawSectionHeader('2. Match-Kennzahlen & Rallye-Laengen');
+        drawSectionHeader('1. Match-Kennzahlen & Rallye-Laengen');
         const statRows = [
           { cells: ['Punkte gewonnen Gesamt', `${st.totalPoints[0]}`, `${st.totalPoints[1]}`] },
           { cells: ['1. Aufschlag im Feld %', `${pctText(st.firstServeIn[0], st.firstServeTotal[0])} (${st.firstServeIn[0]}/${st.firstServeTotal[0]})`, `${pctText(st.firstServeIn[1], st.firstServeTotal[1])} (${st.firstServeIn[1]}/${st.firstServeTotal[1]})`] },
@@ -3183,18 +3713,11 @@
           { cells: ['Doppelfehler', `${st.doubleFaults[0]}`, `${st.doubleFaults[1]}`] },
           { cells: ['Aggressive Margin (W + gegn. FE - UE)', `${st.aggressiveMargin[0] >= 0 ? '+' : ''}${st.aggressiveMargin[0]}`, `${st.aggressiveMargin[1] >= 0 ? '+' : ''}${st.aggressiveMargin[1]}`] },
           { cells: ['Breakball-Conversion (Genutzt)', `${pctText(st.bpConverted[0], st.bpOpportunities[0])} (${st.bpConverted[0]}/${st.bpOpportunities[0]})`, `${pctText(st.bpConverted[1], st.bpOpportunities[1])} (${st.bpConverted[1]}/${st.bpOpportunities[1]})`] },
-          { cells: ['Breakball-Saved (Abgewehrt)', `${pctText(st.bpSaved[0], st.bpFaced[0])} (${st.bpSaved[0]}/${st.bpFaced[0]})`, `${pctText(st.bpSaved[1], st.bpFaced[1])} (${st.bpSaved[1]}/${st.bpFaced[1]})`] },
-          { cells: ['Rallyes gewonnen: Kurz (0-4)', `${st.rallyWon['0-4'][0]}`, `${st.rallyWon['0-4'][1]}`] },
-          { cells: ['Rallyes gewonnen: Mittel (5-8)', `${st.rallyWon['5-8'][0]}`, `${st.rallyWon['5-8'][1]}`] },
-          { cells: ['Rallyes gewonnen: Lang (> 9)', `${st.rallyWon['>9'][0]}`, `${st.rallyWon['>9'][1]}`] }
+          { cells: ['Breakball-Saved (Abgewehrt)', `${pctText(st.bpSaved[0], st.bpFaced[0])} (${st.bpSaved[0]}/${st.bpFaced[0]})`, `${pctText(st.bpSaved[1], st.bpFaced[1])} (${st.bpSaved[1]}/${st.bpFaced[1]})`] }
         ];
-        drawKeyValueTable(
-          ['Kennzahl', match.players[0], match.players[1]],
-          statRows,
-          [contentW * 0.50, contentW * 0.25, contentW * 0.25]
-        );
+        drawKeyValueTable(['Kennzahl', match.players[0], match.players[1]], statRows, [contentW * 0.50, contentW * 0.25, contentW * 0.25]);
 
-        drawSectionHeader('3. Schlagarten-Analyse (Winner, Unforced Errors & Forced Errors)');
+        drawSectionHeader('2. Schlagarten-Analyse');
         const shotRows = [];
         SHOT_TREE_SPEC.forEach(group => {
           const totals = group.children.reduce((acc, ch) => {
@@ -3209,13 +3732,9 @@
             shotRows.push({ isSub: true, cells: [ch.label, `${vals[0]}`, `${vals[1]}`] });
           });
         });
-        drawKeyValueTable(
-          ['Kategorie / Schlagart', match.players[0], match.players[1]],
-          shotRows,
-          [contentW * 0.50, contentW * 0.25, contentW * 0.25]
-        );
+        drawKeyValueTable(['Kategorie / Schlagart', match.players[0], match.players[1]], shotRows, [contentW * 0.50, contentW * 0.25, contentW * 0.25]);
 
-        drawSectionHeader(`4. Seitenwechsel- & Coaching-Notizen (${notes.length})`);
+        drawSectionHeader(`3. Seitenwechsel- & Coaching-Notizen (${notes.length})`);
         if (notes.length > 0) {
           notes.forEach(n => {
             const fullNote = `[${n.id} • Pkt. #${n.pointIndex} • ${n.scoreContext}]: ${n.text}`;
@@ -3230,70 +3749,9 @@
             });
             curY -= (boxH + 4);
           });
-        } else {
-          ensureSpace(18);
-          drawText('Keine Coaching-Notizen im gewaehlten Bereich vorhanden.', marginL + 4, curY - 11, {
-            size: 8.8, color: [0.35, 0.40, 0.48]
-          });
-          curY -= 18;
         }
 
-        drawSectionHeader(`5. Punkt-fuer-Punkt-Protokoll (${pts.length} Punkte)`);
-        const pbpCols = [
-          contentW * 0.07,
-          contentW * 0.07,
-          contentW * 0.10,
-          contentW * 0.12,
-          contentW * 0.22,
-          contentW * 0.31,
-          contentW * 0.11
-        ];
-        const pbpHeaders = ['#', 'Satz', 'Spiele', 'Stand', 'Sieger', 'Abschluss & Schlag', 'Rallye'];
-
-        function drawPbpHeader() {
-          drawRect(marginL, curY, contentW, 17, [0.06, 0.09, 0.16], [0.80, 0.84, 0.88], 0.4);
-          let cx = marginL;
-          pbpHeaders.forEach((h, idx) => {
-            const cw = pbpCols[idx];
-            const align = idx === 4 || idx === 5 ? 'left' : 'center';
-            const tx = align === 'left' ? cx + 5 : cx + cw / 2;
-            drawText(h, tx, curY - 11.5, { bold: true, size: 8.2, color: [1, 1, 1], align });
-            cx += cw;
-          });
-          curY -= 17;
-        }
-
-        ensureSpace(34);
-        drawPbpHeader();
-
-        pts.forEach((p, idx) => {
-          if (ensureSpace(15)) drawPbpHeader();
-          const fill = idx % 2 === 1 ? [0.97, 0.98, 0.99] : [1, 1, 1];
-          drawRect(marginL, curY, contentW, 15, fill, [0.80, 0.84, 0.88], 0.35);
-          const catText = p.category === 'double_fault' ? 'Doppelfehler' : `${p.category.toUpperCase()} • ${p.shot}`;
-          const vals = [
-            `#${p.index}`,
-            `${p.setNumber}`,
-            p.gamesBefore,
-            p.scoreBefore,
-            match.players[p.winner],
-            `${catText}${p.isBreakPoint ? ' [BB]' : ''}`,
-            p.rallyLength
-          ];
-          let cx = marginL;
-          vals.forEach((v, cIdx) => {
-            const cw = pbpCols[cIdx];
-            const align = cIdx === 4 || cIdx === 5 ? 'left' : 'center';
-            const tx = align === 'left' ? cx + 5 : cx + cw / 2;
-            drawText(v, tx, curY - 10.8, { size: 8.0, align });
-            cx += cw;
-          });
-          curY -= 15;
-        });
-
-        if (ops.length > 0) {
-          pages.push(ops.join('\n'));
-        }
+        if (ops.length > 0) pages.push(ops.join('\n'));
 
         const totalPages = pages.length;
         const objects = [];
@@ -3363,16 +3821,11 @@
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
-          setTimeout(() => {
-            try { URL.revokeObjectURL(url); } catch (_) {}
-          }, 8000);
+          setTimeout(() => { try { URL.revokeObjectURL(url); } catch (_) {} }, 8000);
           showToast(`PDF-Report "${fileName}" wurde erstellt.`, 'success');
         } catch (_) {
-          if (typeof window.print === 'function') {
-            window.print();
-          } else {
-            showToast('Fehler beim Erzeugen der PDF-Datei.', 'error');
-          }
+          if (typeof window.print === 'function') window.print();
+          else showToast('Fehler beim Erzeugen der PDF-Datei.', 'error');
         }
       }
 
@@ -3403,6 +3856,9 @@
             if (!list.length) throw new Error('Keine gültigen Matchdaten');
             const rebuilt = list.map((m, i) => sanitizeAndRebuildMatch(m, i));
             appData.matches = rebuilt;
+            if (Array.isArray(parsed?.playerProfiles)) {
+              appData.playerProfiles = parsed.playerProfiles.map((p, i) => sanitizePlayerProfile(p, i));
+            }
             appData.activeMatchId = rebuilt[0].id;
             persistStorage();
             renderAllViews();
@@ -3420,11 +3876,175 @@
         document.getElementById('tabAnalyse')?.addEventListener('click', () => switchTab('analyse'));
 
         document.getElementById('backToSpectatorLiveBtn')?.addEventListener('click', () => switchTab('live'));
-
         document.getElementById('dismissSelfHealBtn')?.addEventListener('click', () => {
           document.getElementById('selfHealNotice')?.classList.add('hidden');
         });
 
+        // Auth Modal & Login Events
+        document.getElementById('headerAccountBtn')?.addEventListener('click', () => {
+          if (authState.user) {
+            pushUserCloudData(false);
+          } else {
+            openAuthModal();
+          }
+        });
+        document.getElementById('openAuthModalBtn')?.addEventListener('click', openAuthModal);
+        document.getElementById('closeAuthModalBtn')?.addEventListener('click', closeAuthModal);
+        document.getElementById('authModalBackdrop')?.addEventListener('click', closeAuthModal);
+
+        document.getElementById('authModeLoginTab')?.addEventListener('click', () => setAuthModalMode('login'));
+        document.getElementById('authModeRegisterTab')?.addEventListener('click', () => setAuthModalMode('register'));
+
+        document.getElementById('saveFirebaseApiKeyBtn')?.addEventListener('click', () => {
+          const val = String(document.getElementById('firebaseWebApiKeyInput')?.value || '').trim();
+          if (!val) {
+            showToast('Bitte einen gültigen Firebase Web-API-Key eingeben.', 'warn');
+            return;
+          }
+          try { localStorage.setItem(FIREBASE_API_KEY_STORAGE, val); } catch (_) {}
+          initFirebaseAuthSdk();
+          showToast('Firebase Auth aktiviert!', 'success');
+        });
+
+        document.getElementById('googleSignInBtn')?.addEventListener('click', async () => {
+          const auth = authState.firebaseAuthInstance || initFirebaseAuthSdk();
+          if (!auth) {
+            showToast('Bitte zuerst oben den Firebase Web-API-Key eintragen.', 'warn');
+            return;
+          }
+          try {
+            const provider = new window.firebase.auth.GoogleAuthProvider();
+            await auth.signInWithPopup(provider);
+            closeAuthModal();
+            showToast('Erfolgreich mit Google angemeldet!', 'success');
+          } catch (err) {
+            showToast(`Google-Anmeldung fehlgeschlagen: ${err?.message || 'Bitte Popup erlauben'}`, 'error');
+          }
+        });
+
+        document.getElementById('emailAuthForm')?.addEventListener('submit', async (ev) => {
+          ev.preventDefault();
+          const auth = authState.firebaseAuthInstance || initFirebaseAuthSdk();
+          if (!auth) {
+            showToast('Bitte zuerst oben den Firebase Web-API-Key eintragen.', 'warn');
+            return;
+          }
+          const email = String(document.getElementById('authEmailInput')?.value || '').trim();
+          const password = String(document.getElementById('authPasswordInput')?.value || '');
+          const displayName = String(document.getElementById('authDisplayNameInput')?.value || '').trim();
+          try {
+            if (authState.authMode === 'register') {
+              const cred = await auth.createUserWithEmailAndPassword(email, password);
+              if (displayName && cred.user) {
+                await cred.user.updateProfile({ displayName });
+              }
+              showToast('Konto erstellt & angemeldet!', 'success');
+            } else {
+              await auth.signInWithEmailAndPassword(email, password);
+              showToast('Erfolgreich angemeldet!', 'success');
+            }
+            closeAuthModal();
+          } catch (err) {
+            showToast(`Anmeldung fehlgeschlagen: ${err?.message || 'Daten prüfen'}`, 'error');
+          }
+        });
+
+        document.getElementById('logoutUserBtn')?.addEventListener('click', async () => {
+          try {
+            if (authState.firebaseAuthInstance) {
+              await authState.firebaseAuthInstance.signOut();
+            }
+          } catch (_) {}
+          authState.user = null;
+          authState.idToken = null;
+          renderAccountUI();
+          showToast('Abgemeldet.', 'info');
+        });
+
+        document.getElementById('syncCloudNowBtn')?.addEventListener('click', () => {
+          pullUserCloudData(true);
+        });
+
+        // Spielerprofile Events
+        document.getElementById('openNewPlayerBtn')?.addEventListener('click', () => openPlayerModal(null));
+        document.getElementById('closePlayerModalBtn')?.addEventListener('click', closePlayerModal);
+        document.getElementById('cancelPlayerModalBtn')?.addEventListener('click', closePlayerModal);
+        document.getElementById('playerModalBackdrop')?.addEventListener('click', closePlayerModal);
+
+        document.getElementById('playerProfileForm')?.addEventListener('submit', (ev) => {
+          ev.preventDefault();
+          const editId = String(document.getElementById('editPlayerIdInput')?.value || '').trim();
+          const name = String(document.getElementById('profileNameInput')?.value || '').trim();
+          if (!name) return;
+
+          const profileObj = sanitizePlayerProfile({
+            id: editId || `pl_${Date.now().toString(36)}`,
+            name,
+            hand: document.getElementById('profileHandSelect')?.value,
+            backhand: document.getElementById('profileBackhandSelect')?.value,
+            lkOrYear: document.getElementById('profileLkInput')?.value,
+            playStyle: document.getElementById('profileStyleSelect')?.value,
+            focusNotes: document.getElementById('profileNotesInput')?.value
+          }, appData.playerProfiles.length);
+
+          if (editId) {
+            const idx = appData.playerProfiles.findIndex(p => p.id === editId);
+            if (idx >= 0) appData.playerProfiles[idx] = profileObj;
+            else appData.playerProfiles.unshift(profileObj);
+          } else {
+            appData.playerProfiles.unshift(profileObj);
+          }
+
+          closePlayerModal();
+          persistStorage();
+          renderStartView();
+          showToast(`Spielerprofil „${name}“ gespeichert.`, 'success');
+        });
+
+        document.getElementById('playerProfilesGrid')?.addEventListener('click', (ev) => {
+          const btn = ev.target.closest('button[data-player-action]');
+          if (!btn) return;
+          const action = btn.getAttribute('data-player-action');
+          const pId = btn.getAttribute('data-player-id');
+          const pName = btn.getAttribute('data-player-name');
+
+          if (action === 'edit' && pId) {
+            const found = appData.playerProfiles.find(p => p.id === pId);
+            if (found) openPlayerModal(found);
+          } else if (action === 'delete' && pId) {
+            appData.playerProfiles = appData.playerProfiles.filter(p => p.id !== pId);
+            persistStorage();
+            renderStartView();
+            showToast('Spielerprofil entfernt.', 'info');
+          } else if (action === 'filter-matches' && pName) {
+            uiState.archivePlayerFilter = pName;
+            renderStartView();
+            document.getElementById('matchArchiveList')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        });
+
+        document.getElementById('player0ProfilePicker')?.addEventListener('change', (ev) => {
+          const val = ev.target.value;
+          if (val) {
+            const inp = document.getElementById('player0Input');
+            if (inp) inp.value = val;
+          }
+        });
+
+        document.getElementById('player1ProfilePicker')?.addEventListener('change', (ev) => {
+          const val = ev.target.value;
+          if (val) {
+            const inp = document.getElementById('player1Input');
+            if (inp) inp.value = val;
+          }
+        });
+
+        document.getElementById('archivePlayerFilter')?.addEventListener('change', (ev) => {
+          uiState.archivePlayerFilter = ev.target.value || 'all';
+          renderStartView();
+        });
+
+        // Neues Match starten
         document.getElementById('newMatchForm')?.addEventListener('submit', (ev) => {
           ev.preventDefault();
           if (uiState.isSpectator && !ALLOW_SPECTATOR_CREATE_MATCHES) {
@@ -3490,13 +4110,13 @@
 
           if (action === 'load-live') {
             appData.activeMatchId = id;
-            persistStorage();
+            persistStorageLocalOnly();
             renderAllViews();
             switchTab('live');
           } else if (action === 'load-analyse') {
             appData.activeMatchId = id;
             uiState.selectedSetFilter = 'all';
-            persistStorage();
+            persistStorageLocalOnly();
             renderAllViews();
             switchTab('analyse');
           } else if (action === 'delete-match') {
@@ -3632,6 +4252,8 @@
             closePointBottomSheet();
             closeNoteModal();
             closeLiveShareModal();
+            closeAuthModal();
+            closePlayerModal();
           }
         });
       }
@@ -3645,6 +4267,7 @@
         const startedAsSpectator = initSharedLinkSpectatorCheck();
         if (!startedAsSpectator) {
           loadAndHealStorage();
+          initFirebaseAuthSdk();
           switchTab('start');
         } else {
           switchTab('live');
