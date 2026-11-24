@@ -1266,12 +1266,17 @@
                 photoURL: user.photoURL || ''
               };
               authState.idToken = token;
+              // Spielerprofile zunächst zurücksetzen, damit keine fremden/lokalen Profile sichtbar sind, bevor die eigenen aus der Cloud geladen wurden
+              appData.playerProfiles = [];
               renderAccountUI();
+              renderStartView();
               await pullUserCloudData(true);
             } else {
               authState.user = null;
               authState.idToken = null;
-              renderAccountUI();
+              // Nach dem Abmelden wieder den lokalen Gast-Speicher laden
+              loadAndHealStorage();
+              renderAllViews();
             }
           });
           return auth;
@@ -1304,9 +1309,15 @@
               updatedAt: Date.now()
             };
           });
-          appData.playerProfiles.forEach(p => {
-            payload.players[p.id] = p;
-          });
+          // Nur eigene Spielerprofile dieses eingeloggten Users speichern
+          appData.playerProfiles
+            .filter(p => !p.ownerUid || p.ownerUid === authState.user.uid)
+            .forEach(p => {
+              payload.players[p.id] = {
+                ...p,
+                ownerUid: authState.user.uid
+              };
+            });
           const resp = await fetch(`${dbUrl}/users/${encodeURIComponent(authState.user.uid)}.json?auth=${encodeURIComponent(authState.idToken)}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -1314,7 +1325,7 @@
           });
           if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
           authState.lastCloudSyncAt = Date.now();
-          if (!silent) showToast('Match-Historie & Spielerprofile in der Cloud gesichert!', 'success');
+          if (!silent) showToast('Match-Historie & eigene Spielerprofile in der Cloud gesichert!', 'success');
         } catch (err) {
           if (!silent) showToast('Cloud-Sync fehlgeschlagen (Firebase-Regeln prüfen).', 'error');
         } finally {
@@ -1335,7 +1346,12 @@
           const remote = await resp.json();
           if (remote && typeof remote === 'object') {
             const remoteMatches = remote.matches ? Object.values(remote.matches).map((m, i) => sanitizeAndRebuildMatch(m, i)) : [];
-            const remotePlayers = remote.players ? Object.values(remote.players).map((p, i) => sanitizePlayerProfile(p, i)) : [];
+            // Spielerprofile strikt nur aus dem eigenen User-Konto laden (nicht mit lokalen Gast-Profilen mischen)
+            const remotePlayers = remote.players
+              ? Object.values(remote.players)
+                  .map((p, i) => sanitizePlayerProfile({ ...p, ownerUid: authState.user.uid }, i))
+                  .filter(p => p.ownerUid === authState.user.uid)
+              : [];
 
             if (mergeWithLocal) {
               const mergedMatchesMap = new Map();
@@ -1349,18 +1365,17 @@
                   appData.activeMatchId = appData.matches[0].id;
                 }
               }
-
-              const mergedPlayersMap = new Map();
-              remotePlayers.forEach(p => mergedPlayersMap.set(p.id, p));
-              appData.playerProfiles.forEach(p => {
-                if (!mergedPlayersMap.has(p.id)) mergedPlayersMap.set(p.id, p);
-              });
-              appData.playerProfiles = Array.from(mergedPlayersMap.values());
             } else {
               if (remoteMatches.length) appData.matches = remoteMatches;
-              if (remotePlayers.length) appData.playerProfiles = remotePlayers;
             }
+
+            // Ausschließlich die eigenen Cloud-Spielerprofile übernehmen
+            appData.playerProfiles = remotePlayers;
             persistStorageLocalOnly();
+            renderAllViews();
+          } else {
+            // Neues Konto ohne Cloud-Eintrag startet mit leerer eigener Spielerprofil-Liste
+            appData.playerProfiles = [];
             renderAllViews();
           }
           await pushUserCloudData(true);
@@ -1461,6 +1476,7 @@
         const p = (raw && typeof raw === 'object') ? raw : {};
         return {
           id: String(p.id || `pl_${Date.now()}_${idx}`),
+          ownerUid: p.ownerUid ? String(p.ownerUid) : null,
           name: String(p.name || `Spieler ${idx + 1}`).trim() || `Spieler ${idx + 1}`,
           hand: p.hand === 'Linkshänder' ? 'Linkshänder' : 'Rechtshänder',
           backhand: p.backhand === 'Einhändig' ? 'Einhändig' : 'Zweihändig',
@@ -1468,6 +1484,13 @@
           playStyle: String(p.playStyle || 'Allrounder').trim(),
           focusNotes: String(p.focusNotes || '').trim()
         };
+      }
+
+      function getVisiblePlayerProfiles() {
+        if (authState.user && authState.user.uid) {
+          return appData.playerProfiles.filter(p => p.ownerUid === authState.user.uid);
+        }
+        return appData.playerProfiles.filter(p => !p.ownerUid);
       }
 
       function computeCareerStatsForPlayer(playerName) {
@@ -1542,8 +1565,9 @@
         const picker0 = document.getElementById('player0ProfilePicker');
         const picker1 = document.getElementById('player1ProfilePicker');
         const archiveFilter = document.getElementById('archivePlayerFilter');
+        const visibleProfiles = getVisiblePlayerProfiles();
 
-        const profileOptionsHtml = `<option value="">Profil wählen…</option>` + appData.playerProfiles.map(p =>
+        const profileOptionsHtml = `<option value="">Profil wählen…</option>` + visibleProfiles.map(p =>
           `<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`
         ).join('');
 
@@ -1551,7 +1575,7 @@
         if (picker1) picker1.innerHTML = profileOptionsHtml;
 
         if (archiveFilter) {
-          const allNames = new Set(appData.playerProfiles.map(p => p.name));
+          const allNames = new Set(visibleProfiles.map(p => p.name));
           appData.matches.forEach(m => m.players.forEach(n => allNames.add(n)));
           const prevVal = uiState.archivePlayerFilter;
           archiveFilter.innerHTML = `<option value="all">Alle Spieler</option>` + Array.from(allNames).map(n =>
@@ -1561,16 +1585,19 @@
         }
 
         if (!grid) return;
-        if (!appData.playerProfiles.length) {
+        if (!visibleProfiles.length) {
+          const emptyHint = authState.user
+            ? `In deinem Konto sind noch keine eigenen Spielerprofile gespeichert. Klicke oben auf <strong>„+ Spielerprofil anlegen“</strong>, um dein erstes eigenes Spielerprofil zu erstellen.`
+            : `Noch keine Spielerprofile angelegt. Klicke oben auf <strong>„+ Spielerprofil anlegen“</strong>, um Stammdaten &amp; Saison-Statistiken zu verfolgen.`;
           grid.innerHTML = `
             <div class="col-span-full p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Noch keine Spielerprofile angelegt. Klicke oben auf <strong>„+ Spielerprofil anlegen“</strong>, um Stammdaten &amp; Saison-Statistiken zu verfolgen.
+              ${emptyHint}
             </div>
           `;
           return;
         }
 
-        grid.innerHTML = appData.playerProfiles.map(p => {
+        grid.innerHTML = visibleProfiles.map(p => {
           const stats = computeCareerStatsForPlayer(p.name);
           const fsPct = stats.firstServeTotalSum > 0
             ? `${Math.round((stats.firstServeInSum / stats.firstServeTotalSum) * 100)} %`
@@ -1936,7 +1963,26 @@
 
       function persistStorageLocalOnly() {
         try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+          // Im eingeloggten Zustand lokale Gast-Spielerprofile bewahren und Cloud-User-Profile nicht im Gast-Storage ablegen
+          let localProfilesToSave = appData.playerProfiles.filter(p => !p.ownerUid);
+          if (authState.user && authState.user.uid) {
+            try {
+              const existingRaw = localStorage.getItem(STORAGE_KEY);
+              if (existingRaw) {
+                const existingParsed = JSON.parse(existingRaw);
+                if (Array.isArray(existingParsed?.playerProfiles)) {
+                  localProfilesToSave = existingParsed.playerProfiles
+                    .map((p, i) => sanitizePlayerProfile(p, i))
+                    .filter(p => !p.ownerUid);
+                }
+              }
+            } catch (_) {}
+          }
+          const storagePayload = {
+            ...appData,
+            playerProfiles: localProfilesToSave
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(storagePayload));
         } catch (_) {}
       }
 
@@ -2951,8 +2997,9 @@
 
         const listEl = document.getElementById('matchArchiveList');
         const datalist = document.getElementById('knownPlayersList');
-        const playersSet = new Set(['Moritz', 'Felix Meinen']);
-        appData.playerProfiles.forEach(p => playersSet.add(p.name));
+        const visibleProfiles = getVisiblePlayerProfiles();
+        const playersSet = new Set(authState.user ? [] : ['Moritz', 'Felix Meinen']);
+        visibleProfiles.forEach(p => playersSet.add(p.name));
         appData.matches.forEach(m => m.players.forEach(p => playersSet.add(p)));
 
         if (datalist) {
@@ -3977,8 +4024,10 @@
           const name = String(document.getElementById('profileNameInput')?.value || '').trim();
           if (!name) return;
 
+          const currentUid = authState.user ? authState.user.uid : null;
           const profileObj = sanitizePlayerProfile({
             id: editId || `pl_${Date.now().toString(36)}`,
+            ownerUid: currentUid,
             name,
             hand: document.getElementById('profileHandSelect')?.value,
             backhand: document.getElementById('profileBackhandSelect')?.value,
@@ -3988,7 +4037,7 @@
           }, appData.playerProfiles.length);
 
           if (editId) {
-            const idx = appData.playerProfiles.findIndex(p => p.id === editId);
+            const idx = appData.playerProfiles.findIndex(p => p.id === editId && p.ownerUid === currentUid);
             if (idx >= 0) appData.playerProfiles[idx] = profileObj;
             else appData.playerProfiles.unshift(profileObj);
           } else {
@@ -4007,12 +4056,13 @@
           const action = btn.getAttribute('data-player-action');
           const pId = btn.getAttribute('data-player-id');
           const pName = btn.getAttribute('data-player-name');
+          const currentUid = authState.user ? authState.user.uid : null;
 
           if (action === 'edit' && pId) {
-            const found = appData.playerProfiles.find(p => p.id === pId);
+            const found = appData.playerProfiles.find(p => p.id === pId && p.ownerUid === currentUid);
             if (found) openPlayerModal(found);
           } else if (action === 'delete' && pId) {
-            appData.playerProfiles = appData.playerProfiles.filter(p => p.id !== pId);
+            appData.playerProfiles = appData.playerProfiles.filter(p => !(p.id === pId && p.ownerUid === currentUid));
             persistStorage();
             renderStartView();
             showToast('Spielerprofil entfernt.', 'info');
