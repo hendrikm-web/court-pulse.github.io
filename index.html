@@ -210,15 +210,9 @@
 
       <!-- NEUES MATCH STARTEN -->
       <section id="newMatchCardSection" class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300/80 dark:border-slate-800 p-4 sm:p-6 shadow-sm">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-5">
-          <div>
-            <h1 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Neues Match starten</h1>
-            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Spieler aus Profilen wählen oder frei eingeben, Format festlegen und direkt ins Live-Tracking starten.</p>
-          </div>
-          <button id="createDemoMatchBtn" type="button"
-            class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-800 dark:text-emerald-300 border border-emerald-500/35 transition-colors flex items-center gap-1.5">
-            <span>Demo-Match erzeugen</span>
-          </button>
+        <div class="mb-5">
+          <h1 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Neues Match starten</h1>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Spieler aus Profilen wählen oder frei eingeben, Format festlegen und direkt ins Live-Tracking starten.</p>
         </div>
 
         <form id="newMatchForm" class="space-y-4">
@@ -236,7 +230,7 @@
                 </select>
               </div>
               <input id="player0Input" name="player0" type="text" list="knownPlayersList" required autocomplete="off"
-                placeholder="z. B. Moritz"
+                placeholder="Name Spieler 1"
                 class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3.5 py-2.5 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
 
@@ -251,7 +245,7 @@
                 </select>
               </div>
               <input id="player1Input" name="player1" type="text" list="knownPlayersList" required autocomplete="off"
-                placeholder="z. B. Felix Meinen"
+                placeholder="Name Spieler 2"
                 class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3.5 py-2.5 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500" />
             </div>
           </div>
@@ -262,7 +256,7 @@
                 Turnier / Ort
               </label>
               <input id="tournamentInput" name="tournament" type="text"
-                placeholder="z. B. Reifen Stiebling Cup Waltrop"
+                placeholder="z. B. Medenspiel / Turnier"
                 class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
             </div>
 
@@ -761,7 +755,7 @@
       <input id="editPlayerIdInput" type="hidden" />
       <div>
         <label for="profileNameInput" class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Spielername *</label>
-        <input id="profileNameInput" type="text" required placeholder="z. B. Moritz"
+        <input id="profileNameInput" type="text" required placeholder="Vor- und Nachname"
           class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white" />
       </div>
       <div class="grid grid-cols-2 gap-3">
@@ -991,7 +985,7 @@
       const MAX_U10_SECONDS = 3600;
 
       const DEFAULT_FIREBASE_DB_URL = 'https://court-pulse-7e8ed-default-rtdb.europe-west1.firebasedatabase.app';
-      const DEFAULT_FIREBASE_WEB_API_KEY = 'AIzaSyCzRjm6bIiwfCv4K72jKBITme_epYXXfNU';
+      const DEFAULT_FIREBASE_WEB_API_KEY = '';
       const ALLOW_SPECTATOR_CREATE_MATCHES = false;
 
       const SHOT_TREE_SPEC = [
@@ -1993,137 +1987,18 @@
         }
       }
 
-      function buildDemoMatchObject() {
-        const demoPtsSpec = [
-          [1,'winner','Vorhand','0-4',true],[1,'ue','Return UE','0-4',true],[1,'ue','Return UE','0-4',true],[1,'winner','Ass','0-4',true],
-          [1,'double_fault','Doppelfehler','0-4',false],[0,'fe','Rückhand FE','5-8',true],[1,'ue','Vorhand UE','0-4',false],[0,'ue','Vorhand UE','5-8',true],
-          [1,'double_fault','Doppelfehler','0-4',false],[0,'winner','Service Winner','0-4',true],[1,'fe','Vorhand FE','5-8',true],[0,'winner','Volley','5-8',true],
-          [0,'ue','Vorhand UE','0-4',false],[0,'winner','Ass','0-4',true],[1,'winner','Ass','0-4',true],[1,'winner','Vorhand','0-4',true],
-          [1,'winner','Ass','0-4',true],[0,'ue','Vorhand UE','0-4',true],[0,'ue','Rückhand UE','0-4',false],[1,'ue','Rückhand UE','5-8',true],
-          [0,'ue','Rückhand UE','0-4',true],[1,'ue','Vorhand UE','5-8',true],[0,'winner','Vorhand','0-4',false],[0,'winner','Smash','5-8',true],
-          [1,'fe','Vorhand FE','5-8',false],[0,'ue','Return UE','0-4',true],[1,'winner','Ass','0-4',true],[0,'ue','Vorhand UE','5-8',true],
-          [0,'ue','Volley UE','5-8',false],[0,'ue','Vorhand UE','0-4',true],[0,'fe','Rückhand FE','0-4',true],[0,'fe','Return FE','0-4',true],
-          [1,'winner','Rückhand','0-4',true],[1,'ue','Vorhand UE','5-8',false],[1,'ue','Vorhand UE','0-4',false],[0,'ue','Rückhand UE','0-4',true],
-          [1,'ue','Vorhand UE','0-4',false],[0,'ue','Smash UE','5-8',true],[1,'winner','Ass','0-4',true],[0,'ue','Vorhand UE','5-8',false],
-          [1,'fe','Return FE','0-4',true],[0,'ue','Rückhand UE','5-8',true],[1,'ue','Rückhand UE','5-8',false],[0,'fe','Rückhand FE','5-8',true],
-          [1,'fe','Vorhand FE','5-8',true],[1,'ue','Vorhand UE','0-4',false],[0,'ue','Rückhand UE','0-4',true],[1,'winner','Vorhand','5-8',true],
-          [1,'fe','Return FE','0-4',false],[0,'winner','Vorhand','0-4',true],[0,'ue','Vorhand UE','0-4',true],[1,'fe','Vorhand FE','0-4',false],
-          [1,'winner','Vorhand','0-4',true],[1,'winner','Rückhand','5-8',false],[0,'ue','Vorhand UE','5-8',true],[1,'fe','Vorhand FE','0-4',true],
-          [0,'ue','Vorhand UE','5-8',false],[0,'fe','Return FE','0-4',true],[1,'fe','Vorhand FE','0-4',false],[0,'fe','Return FE','0-4',true],
-          [1,'ue','Vorhand UE','0-4',true],[0,'ue','Vorhand UE','0-4',false],[0,'ue','Return UE','0-4',true],[1,'winner','Rückhand','0-4',true],
-          [1,'fe','Return FE','0-4',true],[1,'ue','Vorhand UE','0-4',false],[1,'winner','Ass','0-4',true],[0,'winner','Rückhand','0-4',true],
-          [1,'winner','Vorhand','0-4',false],[0,'ue','Vorhand UE','0-4',true],[1,'fe','Rückhand FE','5-8',false],[0,'ue','Rückhand UE','5-8',true],
-          [1,'fe','Vorhand FE','5-8',false],[0,'winner','Vorhand','5-8',true],[0,'fe','Rückhand FE','0-4',true],[0,'ue','Rückhand UE','5-8',true],
-          [1,'winner','Ass','0-4',true],[0,'double_fault','Doppelfehler','0-4',false],[1,'winner','Vorhand','0-4',true],[1,'winner','Service Winner','0-4',true],
-          [0,'fe','Rückhand FE','5-8',false],[1,'fe','Rückhand FE','5-8',true],[0,'ue','Vorhand UE','0-4',true],[0,'ue','Vorhand UE','5-8',false],
-          [0,'winner','Vorhand','5-8',true],[1,'ue','Vorhand UE','0-4',true],[0,'winner','Rückhand','0-4',true],[1,'double_fault','Doppelfehler','0-4',false],
-          [1,'ue','Rückhand UE','5-8',true],[1,'ue','Rückhand UE','0-4',false],[1,'ue','Vorhand UE','5-8',true],[0,'ue','Vorhand UE','0-4',false],
-          [1,'double_fault','Doppelfehler','0-4',false],[0,'ue','Vorhand UE','5-8',true],[0,'winner','Return','0-4',true],[0,'winner','Vorhand','0-4',true],
-          [1,'ue','Vorhand UE','0-4',false],[0,'double_fault','Doppelfehler','0-4',false],[1,'ue','Rückhand UE','0-4',true],[1,'double_fault','Doppelfehler','0-4',false],
-          [1,'ue','Rückhand UE','0-4',true],[0,'winner','Vorhand','5-8',true],[1,'ue','Return UE','0-4',true],[0,'winner','Service Winner','0-4',true],
-          [0,'ue','Rückhand UE','0-4',false],[1,'fe','Return FE','0-4',true],[1,'winner','Vorhand','5-8',true],[0,'fe','Vorhand FE','5-8',false],
-          [1,'ue','Rückhand UE','5-8',true],[1,'ue','Return UE','0-4',true],
-          [0,'winner','Ass','0-4',true],[1,'winner','Rückhand','0-4',true],[0,'winner','Service Winner','0-4',true],[1,'winner','Rückhand','0-4',false],
-          [0,'ue','Vorhand UE','0-4',true],[0,'ue','Return UE','0-4',true],[1,'winner','Ass','0-4',true],[0,'double_fault','Doppelfehler','0-4',false],
-          [1,'ue','Return UE','0-4',true],[0,'ue','Vorhand UE','0-4',true],[1,'fe','Vorhand FE','0-4',false],[0,'fe','Vorhand FE','5-8',true],
-          [1,'winner','Service Winner','0-4',true],[0,'winner','Return','0-4',true],[1,'ue','Return UE','0-4',false],[0,'winner','Vorhand','5-8',true],
-          [1,'winner','Ass','0-4',true],[1,'winner','Vorhand','0-4',true],[0,'winner','Ass','0-4',true],[0,'fe','Volley/Netz FE','5-8',true],
-          [0,'ue','Rückhand UE','0-4',false],[0,'ue','Return UE','0-4',true],[1,'winner','Ass','0-4',true],[1,'winner','Ass','0-4',true],
-          [1,'fe','Return FE','0-4',true],[1,'fe','Vorhand FE','0-4',false],[1,'double_fault','Doppelfehler','0-4',false],[0,'ue','Vorhand UE','0-4',true],
-          [1,'ue','Vorhand UE','0-4',false],[1,'winner','Smash','5-8',true],[1,'ue','Vorhand UE','5-8',true],[0,'double_fault','Doppelfehler','0-4',false],
-          [0,'double_fault','Doppelfehler','0-4',false],[0,'ue','Rückhand UE','0-4',true],[1,'ue','Return UE','0-4',true],[1,'fe','Vorhand FE','0-4',false],
-          [1,'fe','Vorhand FE','5-8',true],[1,'ue','Vorhand UE','5-8',false],[1,'winner','Volley','5-8',true],[0,'ue','Return UE','0-4',true],
-          [1,'double_fault','Doppelfehler','0-4',false],[0,'fe','Return FE','0-4',true],[1,'ue','Vorhand UE','0-4',false],[0,'ue','Rückhand UE','0-4',true],
-          [0,'ue','Return UE','0-4',true],[1,'fe','Vorhand FE','0-4',true],[1,'ue','Return UE','0-4',false],[0,'ue','Rückhand UE','0-4',true],
-          [1,'fe','Vorhand FE','0-4',false],[0,'double_fault','Doppelfehler','0-4',false],[1,'winner','Rückhand','0-4',true],[1,'fe','Vorhand FE','0-4',true],
-          [0,'ue','Vorhand UE','0-4',false],[0,'ue','Vorhand UE','0-4',true],[1,'winner','Vorhand','5-8',true],[0,'ue','Return UE','0-4',true],
-          [0,'winner','Stopp/Lob','5-8',true],[1,'winner','Ass','0-4',true],[1,'ue','Vorhand UE','5-8',false],[1,'winner','Service Winner','0-4',true],
-          [0,'double_fault','Doppelfehler','0-4',false],[1,'winner','Vorhand','0-4',true]
-        ];
-
-        const demoNotes = [
-          { id: 'N1', pointIndex: 20, setNumber: 1, scoreContext: 'Satz 1 (1:2)', text: 'Alles ok. Quote erster Aufschlag muss zu Beginn höher sein. Er schlägt sehr gut auf bis hier' },
-          { id: 'N2', pointIndex: 31, setNumber: 1, scoreContext: 'Satz 1 (3:2)', text: 'Geduldig geblieben. Wenn er weiter Asse serviert, auch mal die Return Position ändern' },
-          { id: 'N3', pointIndex: 37, setNumber: 1, scoreContext: 'Satz 1 (3:3)', text: 'Zu früh longline' },
-          { id: 'N4', pointIndex: 49, setNumber: 1, scoreContext: 'Satz 1 (3:4)', text: 'Höher über das Netz / Geduld' },
-          { id: 'N5', pointIndex: 49, setNumber: 1, scoreContext: 'Satz 1 (3:4)', text: 'Break besser beschützen. Geht zu leicht und schnell wieder weg' },
-          { id: 'N6', pointIndex: 63, setNumber: 1, scoreContext: 'Satz 1 (4:4)', text: 'Drop step nach dem ersten Aufschlag schneller' },
-          { id: 'N7', pointIndex: 67, setNumber: 1, scoreContext: 'Satz 1 (4:5)', text: 'Geht viel zu schnell. Return Position verändern, auch mal chippen. Körpersprache!' },
-          { id: 'N8', pointIndex: 69, setNumber: 1, scoreContext: 'Satz 1 (4:5)', text: 'Nicht passiv werden' },
-          { id: 'N9', pointIndex: 73, setNumber: 1, scoreContext: 'Satz 1 (4:5)', text: 'Einwurf reicht nicht' },
-          { id: 'N10', pointIndex: 74, setNumber: 1, scoreContext: 'Satz 1 (4:5)', text: 'Sehr gut' },
-          { id: 'N11', pointIndex: 76, setNumber: 1, scoreContext: 'Satz 1 (5:5)', text: 'Schöner slice' },
-          { id: 'N12', pointIndex: 85, setNumber: 1, scoreContext: 'Satz 1 (6:5)', text: 'Sehr gut. Gute Balance zwischen Geduld und Aktivität' },
-          { id: 'N13', pointIndex: 90, setNumber: 1, scoreContext: 'Satz 1 (6:6)', text: 'Break nicht gut beschützt. Zu wenig einfache Punkte über den Aufschlag' },
-          { id: 'N14', pointIndex: 91, setNumber: 1, scoreContext: 'Satz 1 (6:6)', text: 'Ungeduldig' },
-          { id: 'N15', pointIndex: 100, setNumber: 1, scoreContext: 'Satz 1 (6:6)', text: 'Angst' },
-          { id: 'N16', pointIndex: 101, setNumber: 1, scoreContext: 'Satz 1 (6:6)', text: 'Angst blockiert' },
-          { id: 'N17', pointIndex: 102, setNumber: 1, scoreContext: 'Satz 1 (6:6)', text: 'Satzball abgewehrt mit Mut!' },
-          { id: 'N18', pointIndex: 110, setNumber: 2, scoreContext: 'Satz 2 (0:0)', text: 'Guter Satz. Der Aufschlag war der Unterschied' },
-          { id: 'N19', pointIndex: 122, setNumber: 2, scoreContext: 'Satz 2 (1:0)', text: 'Gut. Stopp nimmt ihm Rhythmus' },
-          { id: 'N20', pointIndex: 130, setNumber: 2, scoreContext: 'Satz 2 (1:1)', text: 'Gut gelaufen nach Volley' },
-          { id: 'N21', pointIndex: 134, setNumber: 2, scoreContext: 'Satz 2 (2:1)', text: 'Mehr Bewegung beim Return' },
-          { id: 'N22', pointIndex: 138, setNumber: 2, scoreContext: 'Satz 2 (2:2)', text: 'Slice wird besser' },
-          { id: 'N23', pointIndex: 141, setNumber: 2, scoreContext: 'Satz 2 (2:3)', text: 'Beinarbeit nach dem eigenen Aufschlag' },
-          { id: 'N24', pointIndex: 153, setNumber: 2, scoreContext: 'Satz 2 (2:4)', text: 'Zweiter zu schwach' },
-          { id: 'N25', pointIndex: 155, setNumber: 2, scoreContext: 'Satz 2 (3:4)', text: 'Dran bleiben. Chancen nutzen' },
-          { id: 'N26', pointIndex: 161, setNumber: 2, scoreContext: 'Satz 2 (3:5)', text: 'Er gibt dir wenig' },
-          { id: 'N27', pointIndex: 169, setNumber: 2, scoreContext: 'Satz 2 (4:5)', text: 'Beine!!!' }
-        ];
-
-        return sanitizeAndRebuildMatch({
-          id: `demo_${Date.now()}`,
-          date: '2026-11-21',
-          tournament: 'Reifen Stiebling Cup Waltrop',
-          surface: 'Teppich',
-          format: 'bo3_mtb',
-          players: ['Moritz', 'Felix Meinen'],
-          firstServer: 1,
-          durationSec: 5460,
-          durationRunning: false,
-          points: demoPtsSpec.map(p => ({
-            winner: p[0],
-            category: p[1],
-            shot: p[2],
-            rallyLength: p[3],
-            firstServeIn: p[4]
-          })),
-          notes: demoNotes
-        }, 0);
-      }
-
       function buildDefaultPlayerProfiles() {
-        return [
-          sanitizePlayerProfile({
-            id: 'pl_moritz',
-            name: 'Moritz',
-            hand: 'Rechtshänder',
-            backhand: 'Zweihändig',
-            lkOrYear: 'U14 / Leistungskader',
-            playStyle: 'Allrounder',
-            focusNotes: '1. Aufschlag-Quote & Break-Absicherung'
-          }, 0),
-          sanitizePlayerProfile({
-            id: 'pl_felix',
-            name: 'Felix Meinen',
-            hand: 'Rechtshänder',
-            backhand: 'Zweihändig',
-            lkOrYear: 'U14 / Turnierspieler',
-            playStyle: 'Aggressiver Grundlinienspieler',
-            focusNotes: 'Aufschlag-Dominanz & Vorhand-Druck'
-          }, 1)
-        ];
+        return [];
       }
 
       function loadAndHealStorage() {
         try {
           const raw = localStorage.getItem(STORAGE_KEY);
           if (!raw) {
-            const demo = buildDemoMatchObject();
             appData = {
               app: 'CourtPulse Pro',
-              activeMatchId: demo.id,
-              matches: [demo],
+              activeMatchId: null,
+              matches: [],
               playerProfiles: buildDefaultPlayerProfiles()
             };
             persistStorageLocalOnly();
@@ -2136,11 +2011,10 @@
             : buildDefaultPlayerProfiles();
 
           if (!list.length) {
-            const demo = buildDemoMatchObject();
             appData = {
               app: 'CourtPulse Pro',
-              activeMatchId: demo.id,
-              matches: [demo],
+              activeMatchId: null,
+              matches: [],
               playerProfiles: profiles
             };
             persistStorageLocalOnly();
@@ -2153,11 +2027,10 @@
             appData.activeMatchId = appData.matches[0].id;
           }
         } catch (_) {
-          const demo = buildDemoMatchObject();
           appData = {
             app: 'CourtPulse Pro',
-            activeMatchId: demo.id,
-            matches: [demo],
+            activeMatchId: null,
+            matches: [],
             playerProfiles: buildDefaultPlayerProfiles()
           };
           persistStorageLocalOnly();
@@ -2998,7 +2871,7 @@
         const listEl = document.getElementById('matchArchiveList');
         const datalist = document.getElementById('knownPlayersList');
         const visibleProfiles = getVisiblePlayerProfiles();
-        const playersSet = new Set(authState.user ? [] : ['Moritz', 'Felix Meinen']);
+        const playersSet = new Set();
         visibleProfiles.forEach(p => playersSet.add(p.name));
         appData.matches.forEach(m => m.players.forEach(p => playersSet.add(p)));
 
@@ -3013,7 +2886,10 @@
           : appData.matches.filter(m => m.players.some(p => p.toLowerCase() === filterName.toLowerCase()));
 
         if (!visibleMatches.length) {
-          listEl.innerHTML = `<p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic">Keine Matches für den gewählten Spielerfilter gefunden.</p>`;
+          const emptyMsg = appData.matches.length === 0
+            ? 'Noch keine Matches gespeichert. Starte oben dein erstes Match.'
+            : 'Keine Matches für den gewählten Spielerfilter gefunden.';
+          listEl.innerHTML = `<p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic">${emptyMsg}</p>`;
           return;
         }
 
@@ -3053,9 +2929,12 @@
 
       function renderLiveView() {
         const match = getActiveMatch();
-        if (!match) return;
-
         const headerSub = document.getElementById('headerSubtitle');
+        if (!match) {
+          if (headerSub) headerSub.textContent = 'Bereit für das nächste Match';
+          return;
+        }
+
         if (headerSub) headerSub.textContent = `${match.players[0]} vs. ${match.players[1]}`;
 
         document.getElementById('liveTournamentBadge').textContent = `${match.tournament} • ${match.surface}`;
@@ -3434,7 +3313,11 @@
 
       function renderAnalyseView() {
         const match = getActiveMatch();
-        if (!match) return;
+        if (!match) {
+          document.getElementById('analyseTitle').textContent = 'Match-Analyse';
+          document.getElementById('analyseMeta').textContent = 'Kein aktives Match ausgewählt • Starte zuerst ein Match im Start-Tab';
+          return;
+        }
 
         document.getElementById('analyseTitle').textContent = `${match.players[0]} vs. ${match.players[1]}`;
         const setsStr = (match.state.sets || []).map(s => `${s[0]}:${s[1]}`).join(' • ') || 'Laufend';
@@ -4135,22 +4018,6 @@
           showToast(`Match gestartet: ${p0} vs. ${p1}`, 'success');
         });
 
-        document.getElementById('createDemoMatchBtn')?.addEventListener('click', () => {
-          if (uiState.isSpectator && !ALLOW_SPECTATOR_CREATE_MATCHES) {
-            showToast('Livescore-Empfänger können keine eigenen Matches erstellen.', 'warn');
-            return;
-          }
-          const demo = buildDemoMatchObject();
-          appData.matches.unshift(demo);
-          appData.activeMatchId = demo.id;
-          uiState.selectedSetFilter = 'all';
-          uiState.isSpectator = false;
-          persistStorage();
-          renderAllViews();
-          switchTab('analyse');
-          showToast('Demo-Match geladen.', 'success');
-        });
-
         document.getElementById('matchArchiveList')?.addEventListener('click', (ev) => {
           const btn = ev.target.closest('button[data-action]');
           if (!btn) return;
@@ -4170,13 +4037,9 @@
             renderAllViews();
             switchTab('analyse');
           } else if (action === 'delete-match') {
-            if (appData.matches.length <= 1) {
-              showToast('Mindestens ein Match muss im Archiv verbleiben.', 'warn');
-              return;
-            }
             appData.matches = appData.matches.filter(m => m.id !== id);
             if (appData.activeMatchId === id) {
-              appData.activeMatchId = appData.matches[0].id;
+              appData.activeMatchId = appData.matches[0]?.id || null;
             }
             persistStorage();
             renderAllViews();
