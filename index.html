@@ -2006,11 +2006,20 @@
           }
           const parsed = JSON.parse(raw);
           const list = Array.isArray(parsed?.matches) ? parsed.matches : [];
+          // Alte Demo-Matches ("Moritz vs. Felix Meinen") aus lokalem Speicher bereinigen
+          const filteredList = list.filter(m => {
+            if (!m || typeof m !== 'object') return false;
+            const isLegacyDemoId = m.id === 'demo_moritz_felix';
+            const isLegacyDemoPair = Array.isArray(m.players)
+              && m.players[0] === 'Moritz'
+              && m.players[1] === 'Felix Meinen';
+            return !isLegacyDemoId && !isLegacyDemoPair;
+          });
           const profiles = Array.isArray(parsed?.playerProfiles)
             ? parsed.playerProfiles.map((p, i) => sanitizePlayerProfile(p, i))
             : buildDefaultPlayerProfiles();
 
-          if (!list.length) {
+          if (!filteredList.length) {
             appData = {
               app: 'CourtPulse Pro',
               activeMatchId: null,
@@ -2020,11 +2029,14 @@
             persistStorageLocalOnly();
             return;
           }
-          appData.matches = list.map((m, i) => sanitizeAndRebuildMatch(m, i));
+          appData.matches = filteredList.map((m, i) => sanitizeAndRebuildMatch(m, i));
           appData.playerProfiles = profiles;
           appData.activeMatchId = parsed.activeMatchId || appData.matches[0].id;
           if (!appData.matches.some(m => m.id === appData.activeMatchId)) {
             appData.activeMatchId = appData.matches[0].id;
+          }
+          if (filteredList.length !== list.length) {
+            persistStorageLocalOnly();
           }
         } catch (_) {
           appData = {
