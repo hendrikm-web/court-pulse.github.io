@@ -2610,14 +2610,14 @@
         }
         await syncMatchToCloud(m, true);
         const shareKey = m.liveShareId || m.id;
-        const urlObj = new URL(window.location.href);
+        const urlObj = new URL('live.html', window.location.href);
         urlObj.searchParams.set('live', shareKey);
         const shareUrl = urlObj.toString();
 
         try {
           if (navigator.clipboard && window.isSecureContext) {
             await navigator.clipboard.writeText(shareUrl);
-            showToast('📡 Live-Link in Zwischenablage kopiert!');
+            showToast('📡 Live-Link (live.html) kopiert!');
           } else {
             const tempInput = document.createElement('input');
             tempInput.value = shareUrl;
@@ -2625,7 +2625,7 @@
             tempInput.select();
             document.execCommand('copy');
             document.body.removeChild(tempInput);
-            showToast('📡 Live-Link kopiert!');
+            showToast('📡 Live-Link (live.html) kopiert!');
           }
         } catch (e) {
           showToast('Live-Link bereit: ' + shareUrl, 5000);
